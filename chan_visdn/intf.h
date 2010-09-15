@@ -13,8 +13,6 @@
 #ifndef _INTF_H
 #define _INTF_H
 
-
-
 #include <asterisk/version.h>
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 #include <linux/if.h>

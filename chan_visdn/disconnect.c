@@ -34,7 +34,6 @@
 #include <asterisk/cli.h>
 #include <asterisk/causes.h>
 
-
 #include "chan_visdn.h"
 #include "disconnect.h"
 

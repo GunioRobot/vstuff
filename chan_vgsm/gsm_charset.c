@@ -18,7 +18,6 @@
 #else
 #include <asterisk.h>
 #endif
-
 #include "gsm_charset.h"
 #include "util.h"
 

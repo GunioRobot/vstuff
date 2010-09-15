@@ -21,8 +21,6 @@
 #else
 #include <asterisk.h>
 #endif
-
-
 #include "util.h"
 
 static const int base64_value[256] = {

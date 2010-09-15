@@ -27,7 +27,6 @@
 #else
 #include <asterisk.h>
 #endif 
-
 #include <asterisk/lock.h>
 #include <asterisk/file.h>
 #include <asterisk/logger.h>
@@ -36,7 +35,6 @@
 #include <asterisk/module.h>
 #include <asterisk/options.h>
 #include <asterisk/logger.h>
-
 
 /* FUCK YOU ASTERSISK */
 #undef pthread_mutex_t
@@ -63,7 +61,6 @@
 #else
 #define lock lock_dont_use
 #endif
-
 static char *descrip = 
 "vISDNppp(args): Spawns pppd and connects the channel to a newly created\n"
 "  visdn-ppp channel. pppd must support visdn.so plugin.\n"

@@ -522,8 +522,7 @@ int vgsm_sms_status_report_spool(struct vgsm_sms_status_report *sms)
 	struct ast_tm tm;
 	struct timeval tim = ast_tvnow();
 	ast_localtime(&tim, &tm, NULL);
-#endif
-	
+#endif	
 	char tmpstr[40];
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
@@ -554,11 +553,11 @@ int vgsm_sms_status_report_spool(struct vgsm_sms_status_report *sms)
 	ast_localtime(&tv, &tm, NULL);
 	ast_strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
 #endif
-	
 	fprintf(f, "Date: %s\n", tmpstr);
 
 	fprintf(f, "X-SMS-Message-Type: SMS-STATUS-REPORT\n");
 	fprintf(f, "X-SMS-Message-Reference: %d\n", sms->message_reference);
+
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_localtime(&sms->discharge_time, &tm, NULL);
 	strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);

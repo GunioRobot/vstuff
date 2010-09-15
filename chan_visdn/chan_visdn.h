@@ -13,8 +13,6 @@
 #ifndef _CHAN_VISDN_H
 #define _CHAN_VISDN_H
 
-
-
 #include <asterisk/channel.h>
 #include <asterisk/version.h>
 
@@ -56,7 +54,6 @@ struct poll_info
 	struct q931_dlc *dlc;
 };
 
-
 struct visdn_suspended_call
 {
 	struct list_head node;
@@ -76,7 +73,6 @@ struct visdn_suspended_call
 
 
 struct visdn_chan {
-
 	int refcnt; /* workaround for missing asterisk refcounting */
 	ast_cond_t refcnt_decremented_cond;
 

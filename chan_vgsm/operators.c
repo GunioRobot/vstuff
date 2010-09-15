@@ -84,7 +84,6 @@ static void vgsm_operators_countries_init(void)
 	struct ast_flags config_flags = { CONFIG_FLAG_WITHCOMMENTS};
 	cfg = ast_config_load(VGSM_OP_COUNTRY_CONFIG_FILE,config_flags);
 #endif
-
 	if (!cfg) {
 		ast_log(LOG_WARNING,
 			"Unable to load config %s: %s\n",

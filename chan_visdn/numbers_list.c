@@ -12,7 +12,6 @@
 
 #include <stdlib.h>
 
-
 #include <asterisk/version.h>
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 #else  
@@ -20,13 +19,10 @@
 #endif 
 #include <asterisk/pbx.h>
 
-
-
 #include <list.h>
 
 #include "util.h"
 #include "numbers_list.h"
-
 void visdn_numbers_list_flush(struct list_head *list)
 {
 	struct visdn_number *num, *t;

@@ -23,7 +23,6 @@
 #else
 #include <asterisk.h>
 #endif 
-
 #include <asterisk/lock.h>
 #include <asterisk/logger.h>
 

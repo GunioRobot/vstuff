@@ -27,8 +27,6 @@
 #else
 #include <asterisk.h>
 #endif
-
-
 #include <asterisk/lock.h>
 #include <asterisk/file.h>
 #include <asterisk/logger.h>
@@ -37,7 +35,6 @@
 #include <asterisk/module.h>
 #include <asterisk/options.h>
 #include <asterisk/logger.h>
-
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
@@ -214,6 +211,7 @@ static int handler_exec(struct ast_channel *chan, void *data)
 
 			break;
 		}
+
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		int res = write(wfd, f->data, f->datalen);
 #else
