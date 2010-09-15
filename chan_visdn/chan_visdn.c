@@ -27,13 +27,29 @@
 #include <asm/types.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
+#include <asterisk.h>
 
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <netinet/in.h>
+#include <asterisk/version.h>
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 #include <linux/if.h>
+#else
+#include <net/if.h>
+#endif
 #include <linux/if_ether.h>
 #include <net/if_arp.h>
+
+
+
+#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
+#include "rwlock_compat.h"
+#else
+#include <asterisk.h>
+#endif
+
 
 #include <asterisk/lock.h>
 #include <asterisk/channel.h>
@@ -49,7 +65,7 @@
 #include <asterisk/musiconhold.h>
 #include <asterisk/causes.h>
 #include <asterisk/dsp.h>
-#include <asterisk/version.h>
+
 
 #include <linux/lapd.h>
 #include <linux/kstreamer/userport.h>
@@ -72,11 +88,7 @@
 #undef pthread_cond_wait
 #undef pthread_cond_timedwait
 
-#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
-#include "rwlock_compat.h"
-#else
-#include <asterisk.h>
-#endif
+
 
 #include <res_kstreamer.h>
 
@@ -164,6 +176,13 @@
 #define visdn_chan_debug_jitbuf(chan, format, arg...)	\
 	do {} while(0)
 #endif
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+#else
+#define lock lock_dont_use
+#define DSP_FEATURE_DTMF_DETECT DSP_FEATURE_DIGIT_DETECT
+#endif
+
 
 struct visdn_state visdn = {
 	.usecnt = 0,
@@ -533,7 +552,12 @@ static void visdn_accept(
 static void visdn_reload_config(void)
 {
 	struct ast_config *cfg;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	cfg = ast_config_load(VISDN_CONFIG_FILE);
+#else
+	struct ast_flags config_flags = { CONFIG_FLAG_WITHCOMMENTS};
+	cfg = ast_config_load(VISDN_CONFIG_FILE,config_flags);
+#endif
 	if (!cfg) {
 		ast_log(LOG_WARNING,
 			"Unable to load config %s, VISDN disabled\n",
@@ -749,8 +773,11 @@ static void visdn_defer_dtmf_in(
 {
 
 	ast_mutex_lock(&visdn_chan->ast_chan->lock);
+
 	visdn_chan->dtmf_deferred = TRUE;
+
 	ast_mutex_unlock(&visdn_chan->ast_chan->lock);
+
 }
 
 static enum q931_ie_called_party_number_numbering_plan_identificator
@@ -779,7 +806,8 @@ static void visdn_undefer_dtmf_in(
 	struct visdn_ic *ic = visdn_chan->ic;
 
 	ast_mutex_lock(&visdn_chan->ast_chan->lock);
-	visdn_chan->dtmf_deferred = FALSE;
+
+visdn_chan->dtmf_deferred = FALSE;
 
 	/* Flush queue */
 	if (strlen(visdn_chan->dtmf_queue)) {
@@ -804,14 +832,15 @@ static void visdn_undefer_dtmf_in(
 
 		Q931_UNDECLARE_IES(ies);
 	}
-
 	ast_mutex_unlock(&visdn_chan->ast_chan->lock);
+
 }
 
 static void visdn_queue_dtmf(
 	struct visdn_chan *visdn_chan,
 	char digit)
 {
+
 	ast_mutex_lock(&visdn_chan->ast_chan->lock);
 
 	int len = strlen(visdn_chan->dtmf_queue);
@@ -819,13 +848,14 @@ static void visdn_queue_dtmf(
 	if (len >= sizeof(visdn_chan->dtmf_queue) - 1) {
 		ast_log(LOG_WARNING, "DTMF queue is full, dropping digit\n");
 		ast_mutex_unlock(&visdn_chan->ast_chan->lock);
+
 		return;
 	}
 
 	visdn_chan->dtmf_queue[len] = digit;
 	visdn_chan->dtmf_queue[len + 1] = '\0';
-
 	ast_mutex_unlock(&visdn_chan->ast_chan->lock);
+
 }
 
 static int char_to_hexdigit(char c)
@@ -1272,6 +1302,7 @@ llc_failure:;
 	}
 
 	ast_dsp_set_features(visdn_chan->dsp,
+	
 		DSP_FEATURE_DTMF_DETECT |
 		DSP_FEATURE_FAX_DETECT);
 
@@ -1705,7 +1736,11 @@ static int visdn_indicate(
 #endif
 {
 	struct visdn_chan *visdn_chan = to_visdn_chan(ast_chan);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	const struct tone_zone_sound *tone = NULL;
+#else
+	const struct ast_tone_zone_sound *tone = NULL;
+#endif
 	int res = 0;
 
 	switch(condition) {
@@ -2096,6 +2131,7 @@ static int visdn_hangup(struct ast_channel *ast_chan)
 	ast_setstate(ast_chan, AST_STATE_DOWN);
 
 	ast_mutex_lock(&ast_chan->lock);
+
 	if (visdn_chan->q931_call) {
 
 		struct q931_call *q931_call = visdn_chan->q931_call;
@@ -2200,6 +2236,7 @@ static int visdn_hangup(struct ast_channel *ast_chan)
 	 * we have to wait until all threads have released their reference.
 	 */
 	ast_mutex_unlock(&ast_chan->lock);
+
 	int res = 0;
 	struct timespec timeout;
 	struct timeval now;
@@ -2215,7 +2252,6 @@ static int visdn_hangup(struct ast_channel *ast_chan)
 	}
 	ast_mutex_unlock(&visdn.usecnt_lock);
 	ast_mutex_lock(&ast_chan->lock);
-
 	assert(visdn_chan->refcnt > 0);
 
 	if (res == ETIMEDOUT)
@@ -2235,7 +2271,6 @@ static int visdn_hangup(struct ast_channel *ast_chan)
 
 	visdn_chan_put(ast_chan->tech_pvt);
 	ast_chan->tech_pvt = NULL;
-
 	ast_mutex_unlock(&ast_chan->lock);
 
 	return 0;
@@ -2256,7 +2291,11 @@ static struct ast_frame *visdn_read(struct ast_channel *ast_chan)
 		frame->subclass = 0;
 		frame->samples = 0;
 		frame->datalen = 0;
-		frame->data = NULL;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+		frame->data= NULL;
+#else
+		frame->data.ptr= NULL;
+#endif
 		frame->offset = 0;
 
 		return frame;
@@ -2302,7 +2341,12 @@ static struct ast_frame *visdn_read(struct ast_channel *ast_chan)
 	frame->subclass = visdn_chan->ast_frame_subclass;
 	frame->samples = nread;
 	frame->datalen = nread;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	frame->data = visdn_chan->frame_out_buf + AST_FRIENDLY_OFFSET;
+#else
+	frame->data.ptr = visdn_chan->frame_out_buf + AST_FRIENDLY_OFFSET;
+#endif
+
 	frame->offset = AST_FRIENDLY_OFFSET;
 
 /*		struct ast_frame *f2 =
@@ -2343,7 +2387,11 @@ static int visdn_write(
 		return 0;
 
 	int len = frame->datalen;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	__u8 *buf = frame->data;
+#else
+	__u8 *buf = frame->data.ptr;
+#endif
 
 	struct visdn_ic *ic = visdn_chan->ic;
 
@@ -2370,7 +2418,11 @@ static int visdn_write(
 		else
 			memset(buf, 0x2a, diff);
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		memcpy(buf + diff, frame->data, len);
+#else
+		memcpy(buf + diff, frame->data.ptr, len);
+#endif
 		len += diff;
 
 		visdn_chan_debug_jitbuf(visdn_chan,
@@ -2385,7 +2437,11 @@ static int visdn_write(
 		buf = alloca(len + diff);
 
 		memset(buf, 0x2a, diff);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		memcpy(buf + diff, frame->data, len);
+#else
+		memcpy(buf + diff, frame->data.ptr, len);
+#endif
 		len += diff;
 
 		visdn_chan_debug_jitbuf(visdn_chan,
@@ -2399,7 +2455,11 @@ static int visdn_write(
 		buf = alloca(len + diff);
 
 		memset(buf, 0x2a, diff);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		memcpy(buf + diff, frame->data, len);
+#else
+		memcpy(buf + diff, frame->data.ptr, len);
+#endif
 		len += diff;
 
 		visdn_chan_debug_jitbuf(visdn_chan,
@@ -2442,6 +2502,7 @@ static int visdn_write(
 			frame->subclass,
 			ast_chan->writeformat, ast_chan->rawwriteformat,
 			ast_chan->nativeformats,
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 			*(__u8 *)(frame->data + 0),
 			*(__u8 *)(frame->data + 1),
 			*(__u8 *)(frame->data + 2),
@@ -2450,6 +2511,16 @@ static int visdn_write(
 			*(__u8 *)(frame->data + 5),
 			*(__u8 *)(frame->data + 6),
 			*(__u8 *)(frame->data + 7),
+#else
+			*(__u8 *)(frame->data.ptr + 0),
+			*(__u8 *)(frame->data.ptr + 1),
+			*(__u8 *)(frame->data.ptr + 2),
+			*(__u8 *)(frame->data.ptr + 3),
+			*(__u8 *)(frame->data.ptr + 4),
+			*(__u8 *)(frame->data.ptr + 5),
+			*(__u8 *)(frame->data.ptr + 6),
+			*(__u8 *)(frame->data.ptr + 7),
+#endif
 			frame->datalen,
 			frame->samples,
 			pressure,
@@ -2923,9 +2994,8 @@ static void visdn_q931_alerting_indication(
 		return;
 
 	struct ast_channel *ast_chan = visdn_chan->ast_chan;
-
 	ast_mutex_lock(&ast_chan->lock);
-	visdn_handle_eventual_progind(visdn_chan, ies);
+	visdn_handle_eventual_progind(visdn_chan, ies);	
 	ast_mutex_unlock(&ast_chan->lock);
 
 	ast_queue_control(ast_chan, AST_CONTROL_RINGING);
@@ -2999,11 +3069,11 @@ static void visdn_q931_disconnect_indication(
 
 	struct ast_channel *ast_chan = visdn_chan->ast_chan;
 
+
 	ast_mutex_lock(&ast_chan->lock);
 	visdn_handle_eventual_progind(visdn_chan, ies);
 	visdn_set_hangupcause_by_ies(visdn_chan, ies);
 	ast_mutex_unlock(&ast_chan->lock);
-
 	if (visdn_chan->inband_info &&
 	    visdn_chan->channel_has_been_connected) {
 		ast_queue_control(ast_chan, AST_CONTROL_INBAND_INFO);
@@ -3118,11 +3188,9 @@ static void visdn_q931_proceeding_indication(
 		return;
 
 	struct ast_channel *ast_chan = visdn_chan->ast_chan;
-
 	ast_mutex_lock(&ast_chan->lock);
 	visdn_handle_eventual_progind(visdn_chan, ies);
 	ast_mutex_unlock(&ast_chan->lock);
-
 	visdn_undefer_dtmf_in(visdn_chan);
 
 	ast_queue_control(ast_chan, AST_CONTROL_PROCEEDING);
@@ -4189,10 +4257,19 @@ static void visdn_q931_suspend_indication(
 			Q931_UNDECLARE_IES(response_ies);
 		}
 	}
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	if (!ast_chan->whentohangup ||
 	    time(NULL) + 45 < ast_chan->whentohangup)
 		ast_channel_setwhentohangup(ast_chan, ic->T307);
+#else
+	struct timeval offset = { 45, };
+	if ((ast_tvzero(ast_chan->whentohangup)) ||
+	    ast_tvdiff_ms(ast_chan->whentohangup, ast_tvadd(offset, ast_tvnow()))>0 )
+	{	
+	    struct timeval when = { ic->T307, };
+	    ast_channel_setwhentohangup_tv(ast_chan, when); }
+
+#endif
 
 	q931_call->pvt = NULL;
 	visdn_chan->q931_call = NULL;
@@ -4942,16 +5019,37 @@ static void visdn_q931_ccb_receive(void)
 }
 
 /*---------------------------------------------------------------------------*/
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int do_visdn_debug_netlink(int fd, int argc, char *argv[])
+#else
+static char *do_visdn_debug_netlink(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "visdn debug netlink";
+		e->usage =   "Usage: visdn debug netlink\n";
+		return NULL;
+	case CLI_GENERATE:
+		return NULL;
+	}
+	
+#endif
+
 	visdn.debug_netlink = TRUE;
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli(fd, "vISDN Netlink debugging enabled\n");
-
 	return RESULT_SUCCESS;
+#else
+	ast_cli(a->fd, "vISDN Netlink debugging enabled\n");
+	return CLI_SUCCESS;
+#endif
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 static char visdn_debug_netlink_help[] =
 "Usage: visdn debug netlink\n"
 "\n"
@@ -4965,18 +5063,38 @@ static struct ast_cli_entry visdn_debug_netlink =
 	visdn_debug_netlink_help,
 	NULL
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int do_visdn_no_debug_netlink(int fd, int argc, char *argv[])
+#else
+static char *do_visdn_no_debug_netlink(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "visdn no debug netlink";
+		e->usage =   "Usage: visdn no debug netlink\n";
+		return NULL;
+	case CLI_GENERATE:
+		return NULL;
+	}
+
+#endif	
 	visdn.debug_netlink = FALSE;
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli(fd, "vISDN NetLink debugging disabled\n");
-
-	return RESULT_SUCCESS;
+	return RESULT_SUCCESS;		
+#else
+	ast_cli(a->fd, "vISDN NetLink debugging disabled\n");
+	return CLI_SUCCESS;
+#endif
+	
 }
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static struct ast_cli_entry visdn_no_debug_netlink =
 {
 	{ "visdn", "no", "debug", "netlink", NULL },
@@ -4985,21 +5103,41 @@ static struct ast_cli_entry visdn_no_debug_netlink =
 	NULL,
 	NULL
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int do_visdn_debug_q921(int fd, int argc, char *argv[])
+#else
+static char *do_visdn_debug_q921(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
-	// Enable debugging on new DLCs FIXME TODO
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "visdn debug q921";
+		e->usage =   "Usage: visdn debug q921\n";
+		return NULL;
+	case CLI_GENERATE:
+		return NULL;
+	}
+
+#endif	
+	// Enable debugging on new DLCs FIXME TODO
 	visdn.debug_q921 = TRUE;
 	visdn_set_socket_debug(1);
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli(fd, "vISDN q.921 debugging enabled\n");
-
 	return RESULT_SUCCESS;
+#else
+	ast_cli(a->fd, "vISDN q.921 debugging enabled\n");
+	return CLI_SUCCESS;
+#endif	
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char visdn_debug_q921_help[] =
 "Usage: visdn debug q921\n"
 "\n"
@@ -5014,21 +5152,40 @@ static struct ast_cli_entry visdn_debug_q921 =
 	visdn_debug_q921_help,
 	NULL
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int do_visdn_no_debug_q921(int fd, int argc, char *argv[])
+#else
+static char *do_visdn_no_debug_q921(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "visdn no debug q921";
+		e->usage =   "Usage: visdn no debug q921\n";
+		return NULL;
+	case CLI_GENERATE:
+		return NULL;
+	}
+
+#endif	
 	// Disable debugging on new DLCs FIXME TODO
 
 	visdn.debug_q921 = FALSE;
 	visdn_set_socket_debug(0);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli(fd, "vISDN q.921 debugging disabled\n");
-
 	return RESULT_SUCCESS;
+#else
+	ast_cli(a->fd, "vISDN q.921 debugging disabled\n");
+	return CLI_SUCCESS;
+#endif
 }
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static struct ast_cli_entry visdn_no_debug_q921 =
 {
 	{ "visdn", "no", "debug", "q921", NULL },
@@ -5037,18 +5194,39 @@ static struct ast_cli_entry visdn_no_debug_q921 =
 	NULL,
 	NULL
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int do_visdn_debug_q931(int fd, int argc, char *argv[])
+#else
+static char *do_visdn_debug_q931(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "visdn debug q931";
+		e->usage =   "Usage: visdn debug q931 [interface]\n";
+		return NULL;
+	case CLI_GENERATE:
+		return NULL;
+	}
+
+#endif	
+
 	visdn.debug_q931 = TRUE;
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli(fd, "vISDN q.931 debugging enabled\n");
-
 	return RESULT_SUCCESS;
+#else
+	ast_cli(a->fd, "vISDN q.931 debugging enabled\n");
+	return CLI_SUCCESS;	
+#endif
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char visdn_debug_q931_help[] =
 "Usage: visdn debug q931 [interface]\n"
 "\n"
@@ -5063,18 +5241,40 @@ static struct ast_cli_entry visdn_debug_q931 =
 	visdn_debug_q931_help,
 	NULL
 };
+#endif
 
 /*---------------------------------------------------------------------------*/
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int do_visdn_no_debug_q931(int fd, int argc, char *argv[])
+#else
+static char *do_visdn_no_debug_q931(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "visdn no debug q931";
+		e->usage =   "Usage: visdn no debug q931 \n";
+		return NULL;
+	case CLI_GENERATE:
+		return NULL;
+	}
+
+#endif	
 	visdn.debug_q931 = FALSE;
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli(fd, "vISDN q.931 debugging disabled\n");
-
 	return RESULT_SUCCESS;
+#else
+	ast_cli(a->fd, "vISDN q.931 debugging disabled\n");
+	return CLI_SUCCESS;
+#endif
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static struct ast_cli_entry visdn_no_debug_q931 =
 {
 	{ "visdn", "no", "debug", "q931", NULL },
@@ -5083,16 +5283,41 @@ static struct ast_cli_entry visdn_no_debug_q931 =
 	NULL,
 	NULL
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int do_visdn_reload(int fd, int argc, char *argv[])
+#else
+static char *do_visdn_reload(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
-	visdn_reload_config();
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "visdn reload";
+		e->usage =   "Usage: visdn reload\n"
+			     "\n"
+			     "	   Reloads vISDN's configuration.\n"
+			     "	   The reload process is fully non-blocking and can be done while calls\n"
+			     "	   are active. Old calls will retain the previous configuration while\n"
+			     "	   new ones inherit the new configuration\n";	
+		return NULL;
+	case CLI_GENERATE:
+		return NULL;
+	}
+
+#endif	
+	visdn_reload_config();
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
+#else
+	return CLI_SUCCESS;
+#endif
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char visdn_visdn_reload_help[] =
 "Usage: visdn reload\n"
 "\n"
@@ -5109,6 +5334,7 @@ static struct ast_cli_entry visdn_reload =
 	visdn_visdn_reload_help,
 	NULL
 };
+#endif
 
 /*---------------------------------------------------------------------------*/
 
@@ -5281,7 +5507,7 @@ static void visdn_cli_print_call(int fd, struct q931_call *call)
 }
 
 static char *visdn_show_calls_complete(
-#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
+#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)	
 	char *line, char *word,
 #else
 	const char *line, const char *word,
@@ -5334,23 +5560,60 @@ static char *visdn_show_calls_complete(
 
 	return NULL;
 }
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int visdn_show_calls_func(int fd, int argc, char *argv[])
+#else
+static char *visdn_show_calls_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "visdn show calls";
+		e->usage =   "Usage: visdn show calls [<interface>|<callid>]\n"
+			     "\n"
+			     "	Show detailed call informations if <callid> is specified, otherwise\n"
+			     "	lists all the available calls, limited to <interface> if provided.\n ";
+		return NULL;
+	case CLI_GENERATE:
+		return visdn_show_calls_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 4) {
 		visdn_cli_print_call_list(fd, NULL);
 		return RESULT_SUCCESS;
+#else
+	if (a->argc < 4) {
+		visdn_cli_print_call_list(a->fd, NULL);
+		return CLI_SUCCESS;
+#endif
 	}
-
 	const char *intf_name;
 	char *callid = NULL;
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	const char *slashpos = strchr(argv[3], '/');
+#else
+	const char *slashpos = strchr(a->argv[3], '/');
+#endif
 	if (slashpos) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		intf_name = strndupa(argv[3], slashpos - argv[3]);
+#else
+		intf_name = strndupa(a->argv[3], slashpos - a->argv[3]);
+#endif
 		callid = strdupa(slashpos + 1);
 	} else {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		intf_name = argv[3];
+#else
+		intf_name = a->argv[3];
+#endif
 	}
 
 	struct visdn_intf *filter_intf = NULL;
@@ -5369,13 +5632,24 @@ static int visdn_show_calls_func(int fd, int argc, char *argv[])
 	}
 
 	if (!filter_intf) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Interface '%s' not found\n", argv[3]);
 		return RESULT_FAILURE;
+#else
+		ast_cli(a->fd, "Interface '%s' not found\n", a->argv[3]);
+		return CLI_SUCCESS;
+#endif
+
 	}
 
 	if (!callid) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		visdn_cli_print_call_list(fd, filter_intf->q931_intf);
 		return RESULT_SUCCESS;
+#else
+		visdn_cli_print_call_list(a->fd, filter_intf->q931_intf);
+		return CLI_SUCCESS;
+#endif
 	}
 
 	/*---------------------*/
@@ -5387,8 +5661,13 @@ static int visdn_show_calls_func(int fd, int argc, char *argv[])
 		*dirpos = '\0';
 		dirpos++;
 	} else {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)	
 		ast_cli(fd, "Invalid call reference\n");
 		return RESULT_SHOWUSAGE;
+#else
+		ast_cli(a->fd, "Invalid call reference\n");
+		return CLI_SHOWUSAGE;
+#endif
 	}
 
 	if (*dirpos == 'i' || *dirpos == 'I') {
@@ -5402,21 +5681,37 @@ static int visdn_show_calls_func(int fd, int argc, char *argv[])
 				Q931_CALL_DIRECTION_OUTBOUND,
 				atoi(callid));
 	} else {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Invalid call reference\n");
 		return RESULT_SHOWUSAGE;
+#else
+		ast_cli(a->fd, "Invalid call reference\n");
+		return CLI_SHOWUSAGE;
+#endif
 	}
 
 	if (!call) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Call '%s.%s' not found\n", callid, dirpos);
 		return RESULT_FAILURE;
+#else
+		ast_cli(a->fd, "Call '%s.%s' not found\n", callid, dirpos);
+		return CLI_FAILURE;
+#endif
 	}
 
-	visdn_cli_print_call(fd, call);
 	q931_call_put(call);
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	visdn_cli_print_call(fd, call);
 	return RESULT_SUCCESS;
+#else
+	visdn_cli_print_call(a->fd, call);
+	return CLI_SUCCESS;
+#endif
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char visdn_show_calls_help[] =
 "Usage: visdn show calls [<interface>|<callid>]\n"
 "\n"
@@ -5431,8 +5726,27 @@ static struct ast_cli_entry visdn_show_calls =
 	visdn_show_calls_help,
 	visdn_show_calls_complete
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
+
+/*! \brief SIP Cli commands definition */
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+
+#else
+static struct ast_cli_entry cli_ks[] = {
+	AST_CLI_DEFINE(do_visdn_debug_netlink, "visdn debug netlink"),
+	AST_CLI_DEFINE(do_visdn_no_debug_netlink, "visdn no debug netlink"),
+	AST_CLI_DEFINE(do_visdn_debug_q921, "visdn debug q921"),
+	AST_CLI_DEFINE(do_visdn_no_debug_q921, "visdn no debug q921"),
+	AST_CLI_DEFINE(do_visdn_debug_q931, "visdn debug q931 [interface]"),
+	AST_CLI_DEFINE(do_visdn_no_debug_q931, "visdn no debug q931"),
+	AST_CLI_DEFINE(do_visdn_reload, "visdn reload"),
+	AST_CLI_DEFINE(visdn_show_calls_func, "visdn show calls [<interface>|<callid>]"),
+};
+#endif
+
+
+
 
 #if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
 int load_module(void)
@@ -5569,6 +5883,7 @@ static int visdn_load_module(void)
 		goto err_channel_register;
 	}
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_register(&visdn_debug_netlink);
 	ast_cli_register(&visdn_no_debug_netlink);
 	ast_cli_register(&visdn_debug_q921);
@@ -5577,12 +5892,14 @@ static int visdn_load_module(void)
 	ast_cli_register(&visdn_no_debug_q931);
 	ast_cli_register(&visdn_reload);
 	ast_cli_register(&visdn_show_calls);
-
+#else
+	ast_cli_register_multiple(cli_ks, ARRAY_LEN(cli_ks));
+#endif
 	visdn_intf_cli_register();
 	visdn_hg_cli_register();
 
-	visdn_overlap_register();
-	visdn_disconnect_register();
+	 // visdn_overlap_register();   
+	 // visdn_disconnect_register();
 
 	return 0;
 
@@ -5603,6 +5920,11 @@ err_pipe_ccb_q931:
 	return -1;
 }
 
+/*---------------------------------------------------------------------------*/
+
+
+
+
 #if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
 int unload_module(void)
 #else
@@ -5617,6 +5939,7 @@ static int visdn_unload_module(void)
 	visdn_intf_cli_unregister();
 	visdn_hg_cli_unregister();
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_unregister(&visdn_show_calls);
 	ast_cli_unregister(&visdn_reload);
 	ast_cli_unregister(&visdn_no_debug_q931);
@@ -5625,6 +5948,9 @@ static int visdn_unload_module(void)
 	ast_cli_unregister(&visdn_debug_q921);
 	ast_cli_unregister(&visdn_no_debug_netlink);
 	ast_cli_unregister(&visdn_debug_netlink);
+#else
+	ast_cli_unregister_multiple(cli_ks, ARRAY_LEN(cli_ks));
+#endif
 
 	ast_channel_unregister(&visdn_tech);
 

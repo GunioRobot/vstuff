@@ -63,7 +63,6 @@
  *
  */
 
-
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -83,6 +82,14 @@
 
 #include <asm/types.h>
 
+#include <asterisk/version.h>
+#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
+#include "rwlock_compat.h"
+#else
+#include <asterisk.h>
+#include <asterisk/abstract_jb.h>
+#endif
+
 #include <asterisk/lock.h>
 #include <asterisk/channel.h>
 #include <asterisk/config.h>
@@ -98,7 +105,7 @@
 #include <asterisk/dsp.h>
 #include <asterisk/causes.h>
 #include <asterisk/manager.h>
-#include <asterisk/version.h>
+
 
 #include <linux/vgsm.h>
 
@@ -120,12 +127,7 @@
 #undef pthread_cond_wait
 #undef pthread_cond_timedwait
 
-#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
-#include "rwlock_compat.h"
-#else
-#include <asterisk.h>
-#include <asterisk/abstract_jb.h>
-#endif
+
 
 #include <res_kstreamer.h>
 
@@ -162,6 +164,13 @@
 	do {} while(0);
 #endif
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+#else
+#define DSP_FEATURE_DTMF_DETECT DSP_FEATURE_DIGIT_DETECT
+#define ast_dsp_digitmode ast_dsp_set_digitmode
+#endif
+
+
 struct vgsm_state vgsm = {
 	.usecnt = 0,
 #ifdef DEBUG_CODE
@@ -171,6 +180,8 @@ struct vgsm_state vgsm = {
 	.debug_timer = FALSE,
 #endif
 #endif
+
+
 };
 
 static const struct ast_channel_tech vgsm_tech;
@@ -422,7 +433,12 @@ static struct vgsm_urc_class urc_classes[];
 static int vgsm_reload_config(void)
 {
 	struct ast_config *cfg;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	cfg = ast_config_load(VGSM_CONFIG_FILE);
+#else
+	struct ast_flags config_flags = { CONFIG_FLAG_WITHCOMMENTS};
+	cfg = ast_config_load(VGSM_CONFIG_FILE,config_flags);
+#endif
 	if (!cfg) {
 		ast_log(LOG_WARNING,
 			"Unable to load vgsm config file '%s'\n",
@@ -456,17 +472,40 @@ static int vgsm_reload_config(void)
 /*---------------------------------------------------------------------------*/
 
 #ifdef DEBUG_CODE
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int vgsm_debug_timer_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_debug_timer_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm debug timer";
+		e->usage =   "Usage: vgsm debug timer\n"		
+			     "\n"
+			     "Enable debugging of vGSM timer events\n";
+		return NULL;
+	case CLI_GENERATE:
+		return NULL;
+	}
+#endif	
 	ast_mutex_lock(&vgsm.state_lock);
 	vgsm.debug_timer = TRUE;
 	ast_mutex_unlock(&vgsm.state_lock);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli(fd, "vGSM debugging enabled\n");
-
 	return RESULT_SUCCESS;
+#else
+	ast_cli(a->fd, "vGSM debugging enabled\n");
+	return CLI_SUCCESS;
+#endif
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_debug_timer_help[] =
 "Usage: vgsm debug timer\n"
 "\n"
@@ -482,20 +521,45 @@ static struct ast_cli_entry vgsm_debug_timer =
 };
 #endif
 
+#endif
+
 /*---------------------------------------------------------------------------*/
 
 #ifdef DEBUG_CODE
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int vgsm_no_debug_timer_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_no_debug_timer_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm no debug timer";
+		e->usage =   "Usage: vgsm no debug timer\n";
+		return NULL;
+	case CLI_GENERATE:
+		return NULL;
+	}
+#endif	
+
 	ast_mutex_lock(&vgsm.state_lock);
 	vgsm.debug_timer = FALSE;
 	ast_mutex_unlock(&vgsm.state_lock);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli(fd, "vGSM debugging disabled\n");
-
 	return RESULT_SUCCESS;
+#else
+	ast_cli(a->fd, "vGSM debugging disabled\n");
+	return CLI_SUCCESS;
+#endif
+
+	
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static struct ast_cli_entry vgsm_no_debug_timer =
 {
 	{ "vgsm", "no", "debug", "timer", NULL },
@@ -505,19 +569,52 @@ static struct ast_cli_entry vgsm_no_debug_timer =
 	NULL
 };
 #endif
+#endif
 
 /*---------------------------------------------------------------------------*/
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int vgsm_reload_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_reload_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm reload";
+		e->usage =   "Usage: vgsm reload\n"
+			     "\n"
+			     "	Reloads the vGSM configuration.\n"
+			     "\n"
+		   	     "	The me's configuration is loaded using a multiversion approach;\n"
+			     "	Calls using the old configuration will still use it, while new calls\n"
+			     "	will use the newly loaded configuration\n";
+		return NULL;
+	case CLI_GENERATE:
+		return NULL;
+	}
+#endif	
+
+
 	if (vgsm_reload_config() < 0) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Error reloading configuration\n");
 		return RESULT_FAILURE;
+#else	
+		ast_cli(a->fd, "Error reloading configuration\n");
+		return CLI_FAILURE;
+#endif	
 	}
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
+#else
+	return CLI_SUCCESS;
+#endif
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_vgsm_reload_help[] =
 "Usage: vgsm reload\n"
 "\n"
@@ -535,6 +632,7 @@ static struct ast_cli_entry vgsm_reload =
 	vgsm_vgsm_reload_help,
 	NULL
 };
+#endif
 
 /*---------------------------------------------------------------------------*/
 
@@ -907,15 +1005,20 @@ struct vgsm_chan *vgsm_alloc_inbound_call(struct vgsm_me *me)
 		DSP_DIGITMODE_DTMF |
 		(vgsm_chan->mc->dtmf_quelch ? 0 : DSP_DIGITMODE_NOQUELCH) |
 		(vgsm_chan->mc->dtmf_mutemax ? DSP_DIGITMODE_MUTEMAX : 0) |
-		(vgsm_chan->mc->dtmf_relax ? DSP_DIGITMODE_RELAXDTMF : 0));
+		(vgsm_chan->mc->dtmf_relax ? DSP_DIGITMODE_RELAXDTMF : 0)); 
 
 	struct ast_channel *ast_chan = vgsm_chan->ast_chan;
 
 	strcpy(ast_chan->exten, "s");
 	strncpy(ast_chan->context, vgsm_chan->mc->context,
 					sizeof(ast_chan->context));
-	ast_chan->priority = 1;
+	ast_chan->priority = 1;	
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	strncpy(ast_chan->language, vgsm_chan->mc->language, sizeof(ast_chan->language));
+#else
+	ast_string_field_set(ast_chan, language, vgsm_chan->mc->language);
+#endif
+	
 	return vgsm_chan;
 
 	vgsm_chan_put(vgsm_chan->ast_chan->tech_pvt);
@@ -1082,12 +1185,24 @@ static int vgsm_answer(struct ast_channel *ast_chan)
 	}
 	ast_mutex_unlock(&me->lock);
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_mutex_lock(&ast_chan->lock);
+#else
+	ast_mutex_lock(&ast_chan->lock_dont_use);
+#endif
 	if (vgsm_connect_channel(vgsm_chan) < 0) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		ast_mutex_unlock(&ast_chan->lock);
+#else
+		ast_mutex_unlock(&ast_chan->lock_dont_use);
+#endif
 		return -1;
 	}
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_mutex_unlock(&ast_chan->lock);
+#else
+	ast_mutex_unlock(&ast_chan->lock_dont_use);
+#endif
 
 	ast_indicate(ast_chan, -1);
 
@@ -1386,7 +1501,11 @@ static int vgsm_hangup(struct ast_channel *ast_chan)
 	 *
 	 * Thus, we release the lock before waiting.
 	 */
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_mutex_unlock(&ast_chan->lock);
+#else
+	ast_mutex_unlock(&ast_chan->lock_dont_use);
+#endif
 
 	ast_mutex_lock(&vgsm.usecnt_lock);
 	while(vgsm_chan->refcnt > 1 && res == 0) {
@@ -1396,8 +1515,11 @@ static int vgsm_hangup(struct ast_channel *ast_chan)
 	}
 	ast_mutex_unlock(&vgsm.usecnt_lock);
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_mutex_lock(&ast_chan->lock);
-
+#else
+	ast_mutex_lock(&ast_chan->lock_dont_use);
+#endif
 	assert(vgsm_chan->refcnt > 0);
 
 	if (res == ETIMEDOUT) {
@@ -1432,7 +1554,11 @@ static struct ast_frame *vgsm_read(struct ast_channel *ast_chan)
 		frame->subclass = 0;
 		frame->samples = 0;
 		frame->datalen = 0;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		frame->data = NULL;
+#else
+		frame->data.ptr= NULL;
+#endif
 		frame->offset = 0;
 
 		return frame;
@@ -1515,7 +1641,11 @@ static struct ast_frame *vgsm_read(struct ast_channel *ast_chan)
 	frame->frametype = AST_FRAME_VOICE;
 	frame->subclass = ast_chan->rawreadformat;
 	frame->samples = nread / sample_size;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	frame->data = vgsm_chan->frame_out_buf + AST_FRIENDLY_OFFSET;
+#else
+	frame->data.ptr = vgsm_chan->frame_out_buf + AST_FRIENDLY_OFFSET;
+#endif
 	frame->datalen = nread;
 	frame->offset = AST_FRIENDLY_OFFSET;
 
@@ -1627,7 +1757,11 @@ static int vgsm_write(
 	pressure = pressure / sample_size;
 
 	int len = frame->datalen;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	__u8 *buf = frame->data;
+#else
+	__u8 *buf = frame->data.ptr;
+#endif
 
 	vgsm_chan->pressure_average =
 		((mc->jitbuf_average * vgsm_chan->pressure_average) +
@@ -1648,8 +1782,11 @@ static int vgsm_write(
 			memset(buf, 0x00, diff_octs);
 		else
 			memset(buf, 0x2a, diff_octs);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		memcpy(buf + diff_octs, frame->data, len);
+#else
+		memcpy(buf + diff_octs, frame->data.ptr, len);
+#endif
 		len += diff_octs;
 
 		vgsm_debug_jitbuf(vgsm_chan->me,
@@ -1668,8 +1805,11 @@ static int vgsm_write(
 			memset(buf, 0x00, diff_octs);
 		else
 			memset(buf, 0x2a, diff_octs);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		memcpy(buf + diff_octs, frame->data, len);
+#else
+		memcpy(buf + diff_octs, frame->data.ptr, len);
+#endif
 		len += diff_octs;
 
 		vgsm_debug_jitbuf(vgsm_chan->me,
@@ -1687,8 +1827,11 @@ static int vgsm_write(
 			memset(buf, 0x00, diff_octs);
 		else
 			memset(buf, 0x2a, diff_octs);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		memcpy(buf + diff_octs, frame->data, len);
+#else
+		memcpy(buf + diff_octs, frame->data.ptr, len);
+#endif
 		len += diff_octs;
 
 		vgsm_debug_jitbuf(vgsm_chan->me,
@@ -1722,6 +1865,7 @@ static int vgsm_write(
 	}
 
 	if (vgsm_chan->me->debug_frames) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		ast_verbose(
 			"W %7.3f"
 			" S%02x F%02x R%02x N%02x"
@@ -1744,6 +1888,31 @@ static int vgsm_write(
 			pressure,
 			vgsm_chan->pressure_average);
 	}
+#else
+				ast_verbose(
+			"W %7.3f"
+			" S%02x F%02x R%02x N%02x"
+			" %02x%02x%02x%02x%02x%02x%02x%02x"
+			" %3d(%-3d) P%-3d PA%-3d\n",
+			(now - vgsm_chan->last_tx) / 1000.0,
+			frame->subclass,
+			ast_chan->writeformat, ast_chan->rawwriteformat,
+			ast_chan->nativeformats,
+			*(__u8 *)(frame->data.ptr + 0),
+			*(__u8 *)(frame->data.ptr + 1),
+			*(__u8 *)(frame->data.ptr + 2),
+			*(__u8 *)(frame->data.ptr + 3),
+			*(__u8 *)(frame->data.ptr + 4),
+			*(__u8 *)(frame->data.ptr + 5),
+			*(__u8 *)(frame->data.ptr + 6),
+			*(__u8 *)(frame->data.ptr + 7),
+			frame->datalen,
+			frame->samples,
+			pressure,
+			vgsm_chan->pressure_average);
+	}
+#endif
+
 
 	vgsm_chan->last_tx = now;
 
@@ -2457,6 +2626,20 @@ static void vgsm_shutdown(void)
 {
 	vgsm_me_shutdown_all();
 }
+/*! \brief SIP Cli commands definition */
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+
+#else
+static struct ast_cli_entry cli_ksdb[] = {
+	AST_CLI_DEFINE(vgsm_debug_timer_func, "vgsm debug timer"),
+	AST_CLI_DEFINE(vgsm_no_debug_timer_func, "vgsm no debug timer"),
+};
+static struct ast_cli_entry cli_ks[] = {
+	AST_CLI_DEFINE(vgsm_reload_func, "vgsm reload"),
+};
+#endif
+
+
 
 #if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
 int load_module(void)
@@ -2506,11 +2689,18 @@ static int vgsm_load_module(void)
 		goto err_hg_load;
 
 #ifdef DEBUG_CODE
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_register(&vgsm_debug_timer);
 	ast_cli_register(&vgsm_no_debug_timer);
+#else
+	ast_cli_register_multiple(cli_ksdb, ARRAY_LEN(cli_ksdb));
 #endif
-
+#endif
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_register(&vgsm_reload);
+#else
+	ast_cli_register_multiple(cli_ks, ARRAY_LEN(cli_ks));
+#endif
 
 	/* Register manager commands */
 	ast_manager_register2("VGSMsmstx", EVENT_FLAG_CALL,
@@ -2533,12 +2723,19 @@ err_hg_load:
 err_me_load:
 	ast_channel_unregister(&vgsm_tech);
 err_channel_register:
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_unregister(&vgsm_reload);
+#else
+	ast_cli_unregister_multiple(cli_ks, ARRAY_LEN(cli_ks));
+#endif
 
 #ifdef DEBUG_CODE
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_unregister(&vgsm_no_debug_timer);
 	ast_cli_unregister(&vgsm_debug_timer);
+#else
+	ast_cli_unregister_multiple(cli_ksdb, ARRAY_LEN(cli_ksdb));
+#endif
 #endif
 
 	vgsm_me_config_put(vgsm.default_mc);
@@ -2555,12 +2752,19 @@ static int vgsm_unload_module(void)
 
 	vgsm_hg_unload();
 	vgsm_me_unload();
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_unregister(&vgsm_reload);
+#else
+	ast_cli_unregister_multiple(cli_ks, ARRAY_LEN(cli_ks));
+#endif
 
 #ifdef DEBUG_CODE
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_unregister(&vgsm_no_debug_timer);
 	ast_cli_unregister(&vgsm_debug_timer);
+#else
+	ast_cli_unregister_multiple(cli_ksdb, ARRAY_LEN(cli_ksdb));
+#endif
 #endif
 
 	ast_channel_unregister(&vgsm_tech);

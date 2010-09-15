@@ -22,6 +22,13 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include <asterisk/version.h>
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+#else
+#include <asterisk.h>
+#endif
+
+
 #include <asterisk/lock.h>
 #include <asterisk/file.h>
 #include <asterisk/logger.h>
@@ -30,7 +37,7 @@
 #include <asterisk/module.h>
 #include <asterisk/options.h>
 #include <asterisk/logger.h>
-#include <asterisk/version.h>
+
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
@@ -207,8 +214,11 @@ static int handler_exec(struct ast_channel *chan, void *data)
 
 			break;
 		}
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		int res = write(wfd, f->data, f->datalen);
+#else
+		int res = write(wfd, f->data.ptr, f->datalen);
+#endif
 		if (res < 0)
 			;
 
@@ -230,7 +240,11 @@ static int handler_exec(struct ast_channel *chan, void *data)
 
 			ast_frfree(f);
 		} else {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 			f->data = buf;
+#else
+			f->data.ptr = buf;
+#endif
 			f->datalen = nread;
 			f->samples = f->datalen;
 			f->offset = 0;

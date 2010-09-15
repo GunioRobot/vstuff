@@ -18,6 +18,12 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+#include <asterisk/version.h>
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+#else
+#include <asterisk.h>
+#endif 
+
 #include <asterisk/lock.h>
 #include <asterisk/channel.h>
 #include <asterisk/config.h>
@@ -319,20 +325,46 @@ static void do_visdn_hg_cli_show_details(
 	}
 	ast_cli(fd, "\n");
 }
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int do_visdn_hg_cli_show(int fd, int argc, char *argv[])
+#else
+static char *do_visdn_hg_cli_show(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "visdn huntgroup show";
+		e->usage =   "Usage:visdn show huntgroups [<huntgroup>]\n"
+			     "	Displays detailed informations on vISDN's huntgroup or lists all the\n"
+			     "	available huntgroups if <huntgroup> has not been specified.\n";
+		return NULL;
+	case CLI_GENERATE: visdn_hg_cli_show_complete(a->line, a->word, a->pos, a->n);
+	}
+	
+#endif
 	struct visdn_huntgroup *hg;
 	ast_rwlock_rdlock(&visdn.huntgroups_list_lock);
 	list_for_each_entry(hg, &visdn.huntgroups_list, node) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		if (argc != 4 || !strcasecmp(argv[3], hg->name))
 			do_visdn_hg_cli_show_details(fd, hg);
 	}
 	ast_rwlock_unlock(&visdn.huntgroups_list_lock);
 
 	return RESULT_SUCCESS;
-}
+#else
+		if (a->argc != 4 || !strcasecmp(a->argv[3], hg->name))
+			do_visdn_hg_cli_show_details(a->fd, hg);
+	}
+	ast_rwlock_unlock(&visdn.huntgroups_list_lock);
 
+	return CLI_SUCCESS;
+#endif
+}
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char visdn_hg_cli_show_help[] =
 "Usage: visdn show huntgroups [<huntgroup>]\n"
 "	Displays detailed informations on vISDN's huntgroup or lists all the\n"
@@ -346,6 +378,7 @@ static struct ast_cli_entry visdn_hg_cli_show =
 	visdn_hg_cli_show_help,
 	visdn_hg_cli_show_complete
 };
+#endif
 
 /*---------------------------------------------------------------------------*/
 
@@ -504,14 +537,22 @@ static int visdn_hg_cli_debug_all(int fd, BOOL enable)
 
 	return RESULT_SUCCESS;
 }
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int visdn_hg_cli_debug_do(int fd, int argc, char *argv[],
 				int args, BOOL enable)
+#else
+static char *visdn_hg_cli_debug_do(int fd, int argc, char *argv[],
+				int args, BOOL enable)
+#endif
 {
 	int err = 0;
 
 	if (argc < args)
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		return RESULT_SHOWUSAGE;
+#else
+		return CLI_SHOWUSAGE;
+#endif
 
 	struct visdn_huntgroup *hg = NULL;
 
@@ -522,7 +563,11 @@ static int visdn_hg_cli_debug_do(int fd, int argc, char *argv[],
 		if (!hg) {
 			ast_cli(fd, "Cannot find huntgroup '%s'\n",
 				argv[args]);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 			return RESULT_FAILURE;
+#else
+			return CLI_SHOWUSAGE;
+#endif
 		}
 
 		hg->debug = enable;
@@ -531,19 +576,16 @@ static int visdn_hg_cli_debug_do(int fd, int argc, char *argv[],
 	}
 
 	if (err)
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		return err;
-
+#else
+		return CLI_SHOWUSAGE;
+#endif
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
-}
-
-static int visdn_hg_cli_debug_func(int fd, int argc, char *argv[])
-{
-	return visdn_hg_cli_debug_do(fd, argc, argv, 3, TRUE);
-}
-
-static int visdn_hg_cli_no_debug_func(int fd, int argc, char *argv[])
-{
-	return visdn_hg_cli_debug_do(fd, argc, argv, 4, FALSE);
+#else
+	return CLI_SUCCESS;
+#endif
 }
 
 static char *visdn_hg_cli_debug_complete(
@@ -579,7 +621,63 @@ static char *visdn_hg_cli_no_debug_complete(
 
 	return NULL;
 }
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int visdn_hg_cli_debug_func(int fd, int argc, char *argv[])
+#else
+static char *visdn_hg_cli_debug_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "visdn huntgroup debug";
+		e->usage =   "Usage: visdn huntgroup debug [huntgroup]\n"
+			     "\n"
+			     "	Debug huntgroup events\n";
+		return NULL;
+	case CLI_GENERATE:
+		return visdn_hg_cli_debug_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	return visdn_hg_cli_debug_do(fd, argc, argv, 3, TRUE);
+#else
+	return visdn_hg_cli_debug_do(a->fd, a->argc, a->argv, 3, TRUE);
+#endif
+}
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int visdn_hg_cli_no_debug_func(int fd, int argc, char *argv[])
+#else
+static char *visdn_hg_cli_no_debug_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "visdn huntgroup no debug";
+		e->usage =   "Usage: Disable huntgroup debugging\n";
+		return NULL;
+	case CLI_GENERATE:
+		return visdn_hg_cli_no_debug_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	return visdn_hg_cli_debug_do(fd, argc, argv, 4, FALSE);
+#else
+	return visdn_hg_cli_debug_do(a->fd,a->argc,a->argv, 4, FALSE);
+#endif
+}
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char visdn_hg_cli_debug_help[] =
 "Usage: visdn huntgroup debug [huntgroup]\n"
 "\n"
@@ -602,24 +700,55 @@ static struct ast_cli_entry visdn_hg_cli_no_debug =
 	NULL,
 	visdn_hg_cli_no_debug_complete
 };
+#else
+
+static struct ast_cli_entry cli_ksdeb[] = {
+	AST_CLI_DEFINE(visdn_hg_cli_debug_func, "Enable huntgroup debugging"),
+	AST_CLI_DEFINE(visdn_hg_cli_no_debug_func, "Disable huntgroup debugging")
+	
+};
+static struct ast_cli_entry cli_ksnodeb[] = {
+	AST_CLI_DEFINE(do_visdn_hg_cli_show, "Displays vISDN's huntgroups informations")
+	
+};
+#endif
+
+
 #endif
 
 void visdn_hg_cli_register(void)
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_register(&visdn_hg_cli_show);
+#else
+	ast_cli_register_multiple(cli_ksnodeb, ARRAY_LEN(cli_ksnodeb));
+#endif
+
 
 #ifdef DEBUG_CODE
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_register(&visdn_hg_cli_debug);
 	ast_cli_register(&visdn_hg_cli_no_debug);
+#else
+	ast_cli_register_multiple(cli_ksdeb, ARRAY_LEN(cli_ksdeb));
+#endif
+
 #endif
 }
 
 void visdn_hg_cli_unregister(void)
 {
 #ifdef DEBUG_CODE
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_unregister(&visdn_hg_cli_no_debug);
 	ast_cli_unregister(&visdn_hg_cli_debug);
+#else
+	ast_cli_unregister_multiple(cli_ksdeb, ARRAY_LEN(cli_ksdeb));
 #endif
-
+#endif
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_unregister(&visdn_hg_cli_show);
+#else
+	ast_cli_unregister_multiple(cli_ksnodeb, ARRAY_LEN(cli_ksnodeb));
+#endif
 }

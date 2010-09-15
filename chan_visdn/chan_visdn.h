@@ -13,6 +13,8 @@
 #ifndef _CHAN_VISDN_H
 #define _CHAN_VISDN_H
 
+
+
 #include <asterisk/channel.h>
 #include <asterisk/version.h>
 
@@ -54,6 +56,7 @@ struct poll_info
 	struct q931_dlc *dlc;
 };
 
+
 struct visdn_suspended_call
 {
 	struct list_head node;
@@ -64,8 +67,13 @@ struct visdn_suspended_call
 	char call_identity[10];
 	int call_identity_len;
 
-	time_t old_when_to_hangup;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+	time_t  old_when_to_hangup;	
+#else
+	struct timeval old_when_to_hangup;
+#endif
 };
+
 
 struct visdn_chan {
 
@@ -86,7 +94,7 @@ struct visdn_chan {
 	int handle_stream;
 
 	int up_fd;
-//	int ec_fd;
+	int ec_fd;
 
 	struct ks_node *node_userport;
 	struct ks_node *node_bearer;
@@ -94,7 +102,7 @@ struct visdn_chan {
 	struct ks_pipeline *pipeline_rx;
 	struct ks_pipeline *pipeline_tx;
 
-//	int up_bearer_pipeline_started;
+	int up_bearer_pipeline_started;
 
 	int sending_complete;
 
@@ -103,7 +111,6 @@ struct visdn_chan {
 
 	char number[32];
 	int sent_digits;
-
 	char options[16];
 
 	char dtmf_queue[20];

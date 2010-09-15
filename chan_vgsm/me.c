@@ -28,6 +28,11 @@
 #include <sys/signal.h>
 
 #include <asm/types.h>
+#include <asterisk/version.h>
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+#else
+#include <asterisk.h>
+#endif
 
 #include <asterisk/lock.h>
 #include <asterisk/channel.h>
@@ -44,7 +49,7 @@
 #include <asterisk/dsp.h>
 #include <asterisk/causes.h>
 #include <asterisk/manager.h>
-#include <asterisk/version.h>
+
 
 #include <linux/vgsm.h>
 #include <linux/vgsm2.h>
@@ -73,6 +78,7 @@
 #define POWERING_OFF_TIMEOUT (7 * SEC)
 #define WAITING_INITIALIZATION_DELAY (2 * SEC)
 #define WAITING_INITIALIZATION_SIM_INSERTED_DELAY (5 * SEC)
+
 
 
 void vgsm_me_config_default(struct vgsm_me_config *mc)
@@ -1584,10 +1590,17 @@ static void vgsm_me_received_hangup(struct vgsm_me *me)
 		 */
 
 		struct ast_channel *ast_chan = vgsm_chan->ast_chan;
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		ast_mutex_lock(&ast_chan->lock);
+#else
+		ast_mutex_lock(&ast_chan->lock_dont_use);
+#endif
 		if (ast_chan->_state == AST_STATE_RESERVED) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 			ast_mutex_unlock(&ast_chan->lock);
+#else
+			ast_mutex_unlock(&ast_chan->lock_dont_use);
+#endif
 			/* If only a +CRING has been received, no pbx has yet
 			 * been started on the ast_chan, so, do a manual
 			 * cleanup
@@ -1605,7 +1618,11 @@ static void vgsm_me_received_hangup(struct vgsm_me *me)
 				vgsm_cause_to_ast_cause(location, reason);
 
 			ast_softhangup(ast_chan, AST_SOFTHANGUP_DEV);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 			ast_mutex_unlock(&ast_chan->lock);
+#else	
+			ast_mutex_unlock(&ast_chan->lock_dont_use);
+#endif
 		}
 
 		vgsm_chan_put(vgsm_chan);
@@ -1903,10 +1920,18 @@ static void handle_unsolicited_clip(
 
 	ast_mutex_unlock(&me->lock);
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_mutex_lock(&ast_chan->lock);
+#else
+	ast_mutex_lock(&ast_chan->lock_dont_use);
+#endif
 	if (ast_chan->_state == AST_STATE_RING) {
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		ast_mutex_unlock(&ast_chan->lock);
+#else
+		ast_mutex_unlock(&ast_chan->lock_dont_use);
+#endif
 
 		vgsm_me_debug_call(me,
 			"Call is already ringing, ignoring further +CRINGs\n");
@@ -1916,7 +1941,11 @@ static void handle_unsolicited_clip(
 
 	if (ast_chan->_state != AST_STATE_RESERVED) {
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		ast_mutex_unlock(&ast_chan->lock);
+#else
+		ast_mutex_unlock(&ast_chan->lock_dont_use);
+#endif
 
 		vgsm_me_debug_call(me,
 			"Received +CLIP but active call"
@@ -1936,7 +1965,11 @@ static void handle_unsolicited_clip(
 
 	if (!get_token(&pars_ptr, field, sizeof(field))) {
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		ast_mutex_unlock(&ast_chan->lock);
+#else
+		ast_mutex_unlock(&ast_chan->lock_dont_use);
+#endif
 
 		ast_log(LOG_WARNING, "Cannot parse CID '%s'\n", pars);
 		goto err_parse_cid;
@@ -1982,7 +2015,11 @@ static void handle_unsolicited_clip(
 
 parsing_done:
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_mutex_unlock(&ast_chan->lock);
+#else
+	ast_mutex_unlock(&ast_chan->lock_dont_use);
+#endif
 
 	if (ast_pbx_start(ast_chan)) {
 		ast_log(LOG_ERROR, "Unable to start PBX on %s\n",
@@ -2292,13 +2329,21 @@ static void vgsm_handle_slcc_update(
 		}
 
 		struct ast_channel *ast_chan = vgsm_chan->ast_chan;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		ast_mutex_lock(&ast_chan->lock);
+#else
+		ast_mutex_lock(&ast_chan->lock_dont_use);
+#endif
 
 		if (ast_chan->_state != AST_STATE_UP)
 			ast_setstate(ast_chan, AST_STATE_UP);
 
 		ast_queue_control(ast_chan, AST_CONTROL_ANSWER);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		ast_mutex_unlock(&ast_chan->lock);
+#else
+		ast_mutex_unlock(&ast_chan->lock_dont_use);
+#endif
 	}
 	break;
 
@@ -2323,7 +2368,11 @@ static void vgsm_handle_slcc_update(
 			break;
 		}
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		ast_mutex_lock(&vgsm_chan->ast_chan->lock);
+#else
+		ast_mutex_lock(&vgsm_chan->ast_chan->lock_dont_use);
+#endif
 		if (vgsm_connect_channel(vgsm_chan) < 0) {
 			ast_softhangup(vgsm_chan->ast_chan,
 					AST_SOFTHANGUP_DEV);
@@ -2331,7 +2380,11 @@ static void vgsm_handle_slcc_update(
 			ast_queue_control(vgsm_chan->ast_chan,
 				AST_CONTROL_PROCEEDING);
 		}
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		ast_mutex_unlock(&vgsm_chan->ast_chan->lock);
+#else
+		ast_mutex_unlock(&vgsm_chan->ast_chan->lock_dont_use);
+#endif
 	break;
 
 	case VGSM_CALL_STATE_ALERTING: {
@@ -2354,13 +2407,21 @@ static void vgsm_handle_slcc_update(
 		}
 
 		struct ast_channel *ast_chan = vgsm_chan->ast_chan;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		ast_mutex_lock(&ast_chan->lock);
+#else
+		ast_mutex_lock(&ast_chan->lock_dont_use);
+#endif
 
 		if (ast_chan->_state != AST_STATE_RINGING)
 			ast_setstate(ast_chan, AST_STATE_RINGING);
 
 		ast_queue_control(ast_chan, AST_CONTROL_RINGING);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		ast_mutex_unlock(&ast_chan->lock);
+#else
+		ast_mutex_unlock(&ast_chan->lock_dont_use);
+#endif
 	}
 	break;
 
@@ -3430,11 +3491,17 @@ static int vgsm_me_prepin_configure(
 
 	/* Sets current time on me */
 	if (mc->set_clock) {
+			
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)			
 		struct tm tm;
 		time_t ct = time(NULL);
+#else
+		struct ast_tm tm;
+		struct timeval ct = ast_tvnow();
+#endif
 
-		ast_localtime(&ct, &tm, NULL);
-
+	 ast_localtime(&ct, &tm, NULL);
+	
 		err = vgsm_req_make_wait_result(comm, 200 * MILLISEC,
 			"AT+CCLK=\"%02d/%02d/%02d,%02d:%02d:%02d%+03ld\"",
 			tm.tm_year % 100,
@@ -3699,7 +3766,7 @@ static int vgsm_me_flow_configuration(
 	struct vgsm_me *me,
 	struct vgsm_me_config *mc)
 {
-	struct vgsm_comm *comm = &me->comm;
+//	struct vgsm_comm *comm = &me->comm;
 	int err;
 
 	struct termios tio;
@@ -5673,11 +5740,79 @@ static int vgsm_me_show_details(int fd, struct vgsm_me *me)
 	return RESULT_SUCCESS;
 }
 
-static int vgsm_me_show_cli(int fd, int argc, char *argv[])
+static char *vgsm_me_show_complete(
+#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
+	char *line, char *word,
+#else
+	const char *line, const char *word,
+#endif
+	int pos, int state)
 {
-	int err;
-	struct vgsm_me *me;
+	char *commands[] = { "forwarding", "callwaiting", "sim", "network",
+				"statistics", "calls", "moni", "smong",
+				"serial", "details" };
+	int i;
 
+	switch(pos) {
+	case 3:
+		return vgsm_me_completion(line, word, state);
+	case 4:
+		for(i=state; i<ARRAY_SIZE(commands); i++) {
+			if (!strncasecmp(word, commands[i], strlen(word)))
+				return strdup(commands[i]);
+		}
+	}
+
+	return NULL;
+}
+
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_me_show_cli(int fd, int argc, char *argv[])
+#else
+static char *vgsm_me_show_cli(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+char *err1;
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm me show";
+		e->usage =   "Usage: show vgsm mes [<me> [<category>]]\n"
+			     "\n"
+			     "	Display informations on vGSM MEs\n"
+			     "\n"
+			     "	<category> may be one of the following:\n"
+			     "\n"
+		             "	forwarding	show current status of call forwarding\n"
+			     "	supplementary service\n"
+			     "\n"
+			     "	callwaiting	show current status of call waiting\n"
+			     "	supplementary service\n"
+			     "\n"
+		             "	sim show informations related to the SIM card\n"
+			     "	inserted in <me>\n"
+			     "\n"
+			     "	network	show informations regarding the GSM network\n"
+			     "	received by the me\n"
+			     "\n"
+			     "	statistics	show call statistics: inbound/outbound\n"
+			     "	counters, release codes and duration\n"
+			     "\n"
+			     "	calls		show active calls on selected me\n"
+			     "\n"
+			     "	details		show detailed informations about me\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_me_show_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif	
+	struct vgsm_me *me;
+	int err;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)		
 	if (argc >= 4) {
 		me = vgsm_me_get_by_name(argv[3]);
 		if (!me) {
@@ -5710,57 +5845,83 @@ static int vgsm_me_show_cli(int fd, int argc, char *argv[])
 			else {
 				ast_cli(fd, "Command '%s' unrecognized\n",
 					argv[4]);
+#else	
+	if (a->argc >= 4) {
+		me = vgsm_me_get_by_name(a->argv[3]);
+		if (!me) {
+			ast_cli(a->fd, "ME %s not found\n", a->argv[3]);
+			err = RESULT_FAILURE;
+			goto err_me_not_found;
+		}
 
+		if (a->argc >= 5) {
+			if (!strcasecmp(a->argv[4], "forwarding"))
+				err = vgsm_me_show_forwarding(a->fd, me);
+			else if (!strcasecmp(a->argv[4], "callwaiting"))
+				err = vgsm_me_show_callwaiting(a->fd, me);
+			else if (!strcasecmp(a->argv[4], "sim"))
+				err = vgsm_me_show_sim(a->fd, me);
+			else if (!strcasecmp(a->argv[4], "network"))
+				err = vgsm_me_show_network(a->fd, me);
+			else if (!strcasecmp(a->argv[4], "statistics"))
+				err = vgsm_me_show_statistics(a->fd, me);
+			else if (!strcasecmp(a->argv[4], "calls"))
+				err = vgsm_me_show_calls(a->fd, me);
+			else if (!strcasecmp(a->argv[4], "moni"))
+				err = vgsm_me_show_moni(a->fd, me);
+			else if (!strcasecmp(a->argv[4], "smong"))
+				err = vgsm_me_show_smong(a->fd, me);
+			else if (!strcasecmp(a->argv[4], "serial"))
+				err = vgsm_me_show_serial(a->fd, me);
+			else if (!strcasecmp(a->argv[4], "details"))
+				err = vgsm_me_show_details(a->fd, me);
+			else {
+				ast_cli(a->fd, "Command '%s' unrecognized\n",
+					a->argv[4]);
+#endif
 				err = RESULT_SHOWUSAGE;
 				goto err_command_unrecognized;
 			}
 		} else
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 			vgsm_me_show_me(fd, me);
-
+#else
+			vgsm_me_show_me(a->fd, me);
+#endif
 		vgsm_me_put(me);
-
 	} else {
 		ast_rwlock_rdlock(&vgsm.mes_list_lock);
 		list_for_each_entry(me, &vgsm.mes_list, node)
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 			vgsm_me_show_summary(fd, me);
+#else
+			vgsm_me_show_summary(a->fd, me);
+#endif
 		ast_rwlock_unlock(&vgsm.mes_list_lock);
 	}
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
-
+#else
+	return CLI_SUCCESS;
+#endif
 err_command_unrecognized:
 	vgsm_me_put(me);
 err_me_not_found:
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return err;
-}
-
-static char *vgsm_me_show_complete(
-#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
-	char *line, char *word,
 #else
-	const char *line, const char *word,
+	if (err==RESULT_FAILURE)
+	    err1=CLI_FAILURE;
+	if (err==RESULT_SHOWUSAGE)
+	    err1=CLI_SHOWUSAGE;
+	if (err==RESULT_SUCCESS)
+	    err1=CLI_SUCCESS;
+	return err1;
 #endif
-	int pos, int state)
-{
-	char *commands[] = { "forwarding", "callwaiting", "sim", "network",
-				"statistics", "calls", "moni", "smong",
-				"serial", "details" };
-	int i;
-
-	switch(pos) {
-	case 3:
-		return vgsm_me_completion(line, word, state);
-	case 4:
-		for(i=state; i<ARRAY_SIZE(commands); i++) {
-			if (!strncasecmp(word, commands[i], strlen(word)))
-				return strdup(commands[i]);
-		}
-	}
-
-	return NULL;
 }
 
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_me_show_help[] =
 "Usage: show vgsm mes [<me> [<category>]]\n"
 "\n"
@@ -5795,6 +5956,7 @@ static struct ast_cli_entry vgsm_me_show =
 	vgsm_me_show_help,
 	vgsm_me_show_complete,
 };
+#endif
 
 /*---------------------------------------------------------------------------*/
 
@@ -5856,10 +6018,64 @@ static int vgsm_me_power_off(int fd, struct vgsm_me *me)
 	return RESULT_SUCCESS;
 }
 
+static char *vgsm_me_cli_power_complete(
+#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
+	char *line, char *word,
+#else
+	const char *line, const char *word,
+#endif
+	int pos, int state)
+{
+	char *commands[] = { "on", "off" };
+	int i;
+
+	switch(pos) {
+	case 3:
+		return vgsm_me_completion(line, word, state);
+
+	case 4:
+		for(i=state; i<ARRAY_SIZE(commands); i++) {
+			if (!strncasecmp(word, commands[i], strlen(word)))
+				return strdup(commands[i]);
+		}
+	break;
+	}
+
+	return NULL;
+}
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int vgsm_me_cli_power_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_me_cli_power_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
 	int err;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 
+#else
+	char *err1;
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm me power";
+		e->usage =   "Usage: vgsm me power <me> <on|off>\n"
+			     "\n"
+		 	     "	<me>	ME name or '*' for every ME.\n"
+			     "\n"
+			     "	on\n"
+			     "  Power on or off the specified me.\n"
+			     "\n"
+			     "	off\n"
+		             "  Power-off will be graceful (requesting de-registration from\n"
+		             "	the network. If, however, the me is not responding,\n"
+			     "	the me will be forcibly shut down.\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_me_cli_power_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 4) {
 		ast_cli(fd, "Missing ME name\n\n");
 		err = RESULT_SHOWUSAGE;
@@ -5896,6 +6112,44 @@ static int vgsm_me_cli_power_func(int fd, int argc, char *argv[])
 		}
 
 		err = func(fd, me);
+#else
+	if (a->argc < 4) {
+		ast_cli(a->fd, "Missing ME name\n\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_me;
+	}
+	const char *me_name = a->argv[3];
+
+	if (a->argc < 5) {
+		ast_cli(a->fd, "Missing command\n\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_command;
+	}
+	const char *command = a->argv[4];
+
+	int (*func)(int fd, struct vgsm_me *me);
+
+	if (!strcasecmp(command, "on"))
+		func = vgsm_me_power_on;
+	else if (!strcasecmp(command, "off"))
+		func = vgsm_me_power_off;
+	else {
+		ast_cli(a->fd, "Unknown command '%s'\n", command);
+		err = RESULT_SHOWUSAGE;
+		goto err_unknown_command;
+	}
+
+	if (strcmp(me_name, "*")) {
+		struct vgsm_me *me;
+		me = vgsm_me_get_by_name(me_name);
+		if (!me) {
+			ast_cli(a->fd, "Cannot find me '%s'\n", me_name);
+			err = RESULT_FAILURE;
+			goto err_me_not_found;
+		}
+
+		err = func(a->fd, me);
+#endif
 
 		vgsm_me_put(me);
 	} else {
@@ -5903,49 +6157,39 @@ static int vgsm_me_cli_power_func(int fd, int argc, char *argv[])
 		struct vgsm_me *me;
 		list_for_each_entry(me, &vgsm.mes_list, node) {
 			ast_mutex_lock(&me->lock);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)	
 			func(fd, me);
+#else	
+			func(a->fd, me);
+#endif
 			ast_mutex_unlock(&me->lock);
 		}
 		ast_rwlock_unlock(&vgsm.mes_list_lock);
 	}
-
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
-
+#else
+	return CLI_SUCCESS;
+#endif
 err_me_not_found:
 err_unknown_command:
 err_missing_command:
 err_missing_me:
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return err;
-}
-
-static char *vgsm_me_cli_power_complete(
-#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
-	char *line, char *word,
 #else
-	const char *line, const char *word,
+	if (err==RESULT_FAILURE)
+	   err1=CLI_FAILURE;
+	if (err==RESULT_SHOWUSAGE)
+	   err1=CLI_SHOWUSAGE;
+	if (err==RESULT_SUCCESS)
+	   err1=CLI_SUCCESS;
+	
+	return err1;
 #endif
-	int pos, int state)
-{
-	char *commands[] = { "on", "off" };
-	int i;
-
-	switch(pos) {
-	case 3:
-		return vgsm_me_completion(line, word, state);
-
-	case 4:
-		for(i=state; i<ARRAY_SIZE(commands); i++) {
-			if (!strncasecmp(word, commands[i], strlen(word)))
-				return strdup(commands[i]);
-		}
-	break;
-	}
-
-	return NULL;
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_me_cli_power_help[] =
 "Usage: vgsm me power <me> <on|off>\n"
 "\n"
@@ -5967,7 +6211,7 @@ static struct ast_cli_entry vgsm_me_cli_power =
 	vgsm_me_cli_power_help,
 	vgsm_me_cli_power_complete
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
 
 static int vgsm_me_cli_reset_do(int fd, struct vgsm_me *me)
@@ -5997,10 +6241,46 @@ static int vgsm_me_cli_reset_do(int fd, struct vgsm_me *me)
 	return RESULT_SUCCESS;
 }
 
+static char *vgsm_me_cli_reset_complete(
+#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
+	char *line, char *word,
+#else
+	const char *line, const char *word,
+#endif
+	int pos, int state)
+{
+	switch(pos) {
+	case 3:
+		return vgsm_me_completion(line, word, state);
+	}
+
+	return NULL;
+}
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int vgsm_me_cli_reset_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_me_cli_reset_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
 	int err;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 
+#else
+	char *err1;
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm me reset";
+		e->usage =   "Usage: vgsm me reset <me>\n"
+			     "\n"
+			     "	Initiate ME software reset\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_me_cli_reset_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 4) {
 		ast_cli(fd, "Missing ME name\n\n");
 		err = RESULT_SHOWUSAGE;
@@ -6020,6 +6300,27 @@ static int vgsm_me_cli_reset_func(int fd, int argc, char *argv[])
 		ast_mutex_lock(&me->lock);
 		err = vgsm_me_cli_reset_do(fd, me);
 		ast_mutex_unlock(&me->lock);
+#else
+	if (a->argc < 4) {
+		ast_cli(a->fd, "Missing ME name\n\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_me;
+	}
+	const char *me_name = a->argv[3];
+
+	if (strcmp(me_name, "*")) {
+		struct vgsm_me *me;
+		me = vgsm_me_get_by_name(me_name);
+		if (!me) {
+			ast_cli(a->fd, "Cannot find me '%s'\n", me_name);
+			err = RESULT_FAILURE;
+			goto err_me_not_found;
+		}
+
+		ast_mutex_lock(&me->lock);
+		err = vgsm_me_cli_reset_do(a->fd, me);
+		ast_mutex_unlock(&me->lock);
+#endif	
 
 		vgsm_me_put(me);
 	} else {
@@ -6029,7 +6330,11 @@ static int vgsm_me_cli_reset_func(int fd, int argc, char *argv[])
 		struct vgsm_me *me;
 		list_for_each_entry(me, &vgsm.mes_list, node) {
 			ast_mutex_lock(&me->lock);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 			err = vgsm_me_cli_reset_do(fd, me);
+#else	
+			err = vgsm_me_cli_reset_do(a->fd, me);
+#endif
 			ast_mutex_unlock(&me->lock);
 		}
 		ast_rwlock_unlock(&vgsm.mes_list_lock);
@@ -6038,31 +6343,29 @@ static int vgsm_me_cli_reset_func(int fd, int argc, char *argv[])
 	if (err != RESULT_SUCCESS)
 		goto err_reset_do;
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
+#else
+	return CLI_SUCCESS;
+#endif
 
 err_reset_do:
 err_me_not_found:
 err_missing_me:
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return err;
-}
-
-static char *vgsm_me_cli_reset_complete(
-#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
-	char *line, char *word,
 #else
-	const char *line, const char *word,
+	if (err==RESULT_FAILURE)
+	    err1=CLI_FAILURE;
+	if (err==RESULT_SHOWUSAGE)
+	   err1=CLI_SHOWUSAGE;
+	if (err==RESULT_SUCCESS)
+	   err1=CLI_SUCCESS;
+	return err1;
 #endif
-	int pos, int state)
-{
-	switch(pos) {
-	case 3:
-		return vgsm_me_completion(line, word, state);
-	}
-
-	return NULL;
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_me_cli_reset_help[] =
 "Usage: vgsm me reset <me>\n"
 "\n"
@@ -6076,7 +6379,7 @@ static struct ast_cli_entry vgsm_me_cli_reset =
 	vgsm_me_cli_reset_help,
 	vgsm_me_cli_reset_complete
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
 
 static int vgsm_me_cli_service_on(int fd, struct vgsm_me *me)
@@ -6108,10 +6411,62 @@ static int vgsm_me_cli_service_off(int fd, struct vgsm_me *me)
 	return RESULT_SUCCESS;
 }
 
-static int vgsm_me_cli_service_func(int fd, int argc, char *argv[])
+static char *vgsm_me_cli_service_complete(
+#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
+	char *line, char *word,
+#else
+	const char *line, const char *word,
+#endif
+	int pos, int state)
 {
-	int err;
+	char *commands[] = { "on", "off" };
+	int i;
 
+	switch(pos) {
+	case 3:
+		return vgsm_me_completion(line, word, state);
+
+	case 4:
+		for(i=state; i<ARRAY_SIZE(commands); i++) {
+			if (!strncasecmp(word, commands[i], strlen(word)))
+				return strdup(commands[i]);
+		}
+	break;
+	}
+
+	return NULL;
+}
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_me_cli_service_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_me_cli_service_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+	#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm me service";
+		e->usage =   "Usage: vgsm me service <on|off> <me>\n"
+			     "\n"
+			     "	<me>\n"
+		             "	ME name or '*' for every ME.\n"
+			     "\n"
+			     "	on\n"
+		             "	Put the specified me in-service.\n"
+			     "\n"
+			     "	off\n"
+		             "	Put the specified ME offline.\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_me_cli_service_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+	int err;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	
 	if (argc < 4) {
 		ast_cli(fd, "Missing ME name\n\n");
 		err = RESULT_SHOWUSAGE;
@@ -6150,55 +6505,88 @@ static int vgsm_me_cli_service_func(int fd, int argc, char *argv[])
 		ast_mutex_lock(&me->lock);
 		err = func(fd, me);
 		ast_mutex_unlock(&me->lock);
+#else
+	char *err1;
+	if (a->argc < 4) {
+		ast_cli(a->fd, "Missing ME name\n\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_me;
+	}
+	const char *me_name = a->argv[3];
 
+	if (a->argc < 5) {
+		ast_cli(a->fd, "Missing command\n\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_command;
+	}
+	const char *command = a->argv[4];
+
+	int (*func)(int fd, struct vgsm_me *me);
+
+	if (!strcasecmp(command, "on"))
+		func = vgsm_me_cli_service_on;
+	else if (!strcasecmp(command, "off"))
+		func = vgsm_me_cli_service_off;
+	else {
+		ast_cli(a->fd, "Unknown command '%s'\n", command);
+		err = RESULT_SHOWUSAGE;
+		goto err_unknown_command;
+	}
+
+	if (strcmp(me_name, "*")) {
+		struct vgsm_me *me;
+		me = vgsm_me_get_by_name(me_name);
+		if (!me) {
+			ast_cli(a->fd, "Cannot find me '%s'\n", me_name);
+			err = RESULT_FAILURE;
+			goto err_me_not_found;
+		}
+
+		ast_mutex_lock(&me->lock);
+		err = func(a->fd, me);
+		ast_mutex_unlock(&me->lock);
+#endif
 		vgsm_me_put(me);
 	} else {
 		ast_rwlock_rdlock(&vgsm.mes_list_lock);
 		struct vgsm_me *me;
 		list_for_each_entry(me, &vgsm.mes_list, node) {
 			ast_mutex_lock(&me->lock);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 			func(fd, me);
+#else
+			func(a->fd, me);
+#endif
 			ast_mutex_unlock(&me->lock);
 		}
 		ast_rwlock_unlock(&vgsm.mes_list_lock);
 	}
 
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
+#else
+	return CLI_SUCCESS;	
+#endif
 
 err_me_not_found:
 err_unknown_command:
 err_missing_command:
 err_missing_me:
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return err;
-}
-
-static char *vgsm_me_cli_service_complete(
-#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
-	char *line, char *word,
 #else
-	const char *line, const char *word,
+	if (err==RESULT_FAILURE)
+	   err1=CLI_FAILURE;
+	if (err==RESULT_SHOWUSAGE)
+	   err1=CLI_SHOWUSAGE;
+	if (err==RESULT_SUCCESS)
+	   err1=CLI_SUCCESS;
+	return err1;
 #endif
-	int pos, int state)
-{
-	char *commands[] = { "on", "off" };
-	int i;
-
-	switch(pos) {
-	case 3:
-		return vgsm_me_completion(line, word, state);
-
-	case 4:
-		for(i=state; i<ARRAY_SIZE(commands); i++) {
-			if (!strncasecmp(word, commands[i], strlen(word)))
-				return strdup(commands[i]);
-		}
-	break;
-	}
-
-	return NULL;
+	
 }
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 
 static char vgsm_me_cli_service_help[] =
 "Usage: vgsm me service <on|off> <me>\n"
@@ -6220,6 +6608,7 @@ static struct ast_cli_entry vgsm_me_cli_service =
 	vgsm_me_cli_service_help,
 	vgsm_me_cli_service_complete
 };
+#endif
 
 /*---------------------------------------------------------------------------*/
 
@@ -6239,11 +6628,63 @@ static int vgsm_me_cli_identify_do(int fd, struct vgsm_me *me, int value)
 
 	return RESULT_SUCCESS;
 }
-
-static int vgsm_me_cli_identify_func(int fd, int argc, char *argv[])
+static char *vgsm_me_cli_identify_complete(
+#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
+	char *line, char *word,
+#else
+	const char *line, const char *word,
+#endif
+	int pos, int state)
 {
-	int err;
+	char *commands[] = { "off" };
+	int i;
 
+	switch(pos) {
+	case 3:
+		return vgsm_me_completion(line, word, state);
+
+	case 4:
+		for(i=state; i<ARRAY_SIZE(commands); i++) {
+			if (!strncasecmp(word, commands[i], strlen(word)))
+				return strdup(commands[i]);
+		}
+	break;
+	}
+
+	return NULL;
+}
+
+
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_me_cli_identify_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_me_cli_identify_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm me identify";
+		e->usage =   "Usage: vgsm me identify <me> [off]\n"
+			     "\n"
+			     "	<me>\n"
+			     "	ME name or * for every ME.\n"
+			     "\n"
+			     "	off\n"
+			     "	Disables frontal LED flashing to identify the\n"
+			     "	antenna connector associated with the specified me.\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_me_cli_identify_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+	int err;
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	
 	if (argc < 4) {
 		ast_cli(fd, "Missing ME name\n\n");
 		err = RESULT_SHOWUSAGE;
@@ -6272,9 +6713,43 @@ static int vgsm_me_cli_identify_func(int fd, int argc, char *argv[])
 			err = RESULT_FAILURE;
 			goto err_me_not_found;
 		}
+#else
+	char *err1;
+	if (a->argc < 4) {
+		ast_cli(a->fd, "Missing ME name\n\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_me;
+	}
+	const char *me_name = a->argv[3];
 
+	int value = 1;
+	if (a->argc > 4) {
+		const char *command = a->argv[4];
+
+		if (!strcasecmp(command, "off"))
+			value = 0;
+		else {
+			ast_cli(a->fd, "Unknown command '%s'\n", command);
+			err = RESULT_SHOWUSAGE;
+			goto err_unknown_command;
+		}
+	}
+
+	if (strcmp(me_name, "*")) {
+		struct vgsm_me *me;
+		me = vgsm_me_get_by_name(me_name);
+		if (!me) {
+			ast_cli(a->fd, "Cannot find me '%s'\n", me_name);
+			err = RESULT_FAILURE;
+			goto err_me_not_found;
+		}
+#endif
 		ast_mutex_lock(&me->lock);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		err = vgsm_me_cli_identify_do(fd, me, value);
+#else
+		err = vgsm_me_cli_identify_do(a->fd, me, value);
+#endif
 		ast_mutex_unlock(&me->lock);
 
 		vgsm_me_put(me);
@@ -6283,46 +6758,38 @@ static int vgsm_me_cli_identify_func(int fd, int argc, char *argv[])
 		struct vgsm_me *me;
 		list_for_each_entry(me, &vgsm.mes_list, node) {
 			ast_mutex_lock(&me->lock);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 			err = vgsm_me_cli_identify_do(fd, me, value);
+#else
+			err = vgsm_me_cli_identify_do(a->fd, me, value);
+#endif
 			ast_mutex_unlock(&me->lock);
 		}
 		ast_rwlock_unlock(&vgsm.mes_list_lock);
 	}
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
+#else
+	return CLI_SUCCESS;
+#endif
 
 err_me_not_found:
 err_unknown_command:
 err_missing_me:
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return err;
-}
-static char *vgsm_me_cli_identify_complete(
-#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
-	char *line, char *word,
 #else
-	const char *line, const char *word,
+	if (err==RESULT_FAILURE)
+	   err1=CLI_FAILURE;
+	if (err==RESULT_SHOWUSAGE)
+	   err1=CLI_SHOWUSAGE;
+	if (err==RESULT_SUCCESS)
+	   err1=CLI_SUCCESS;
+	return err1;
 #endif
-	int pos, int state)
-{
-	char *commands[] = { "off" };
-	int i;
-
-	switch(pos) {
-	case 3:
-		return vgsm_me_completion(line, word, state);
-
-	case 4:
-		for(i=state; i<ARRAY_SIZE(commands); i++) {
-			if (!strncasecmp(word, commands[i], strlen(word)))
-				return strdup(commands[i]);
-		}
-	break;
-	}
-
-	return NULL;
+	
 }
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_me_cli_identify_help[] =
 "Usage: vgsm me identify <me> [off]\n"
 "\n"
@@ -6341,13 +6808,79 @@ static struct ast_cli_entry vgsm_me_cli_identify =
 	vgsm_me_cli_identify_help,
 	vgsm_me_cli_identify_complete
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
-
-static int vgsm_me_cli_operator_func(int fd, int argc, char *argv[])
+static char *vgsm_me_cli_operator_complete(
+#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
+	char *line, char *word,
+#else
+	const char *line, const char *word,
+#endif
+	int pos, int state)
 {
-	int err;
+	char *modes[] = { "auto", "none", "<LAI>" };
+	char *options[] = { "fallback" };
+	int i;
 
+	switch(pos) {
+	case 3:
+		return vgsm_me_completion(line, word, state);
+
+	case 4:
+		for(i=state; i<ARRAY_SIZE(modes); i++) {
+			if (!strncasecmp(word, modes[i], strlen(word)))
+				return strdup(modes[i]);
+		}
+	break;
+
+	case 5:
+		for(i=state; i<ARRAY_SIZE(options); i++) {
+			if (!strncasecmp(word, options[i], strlen(word)))
+				return strdup(options[i]);
+		}
+	break;
+	}
+
+	return NULL;
+}
+
+
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_me_cli_operator_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_me_cli_operator_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm me operator";
+		e->usage =   "Usage: vgsm me operator <me> <auto | none | LAI> [fallback]\n"
+			      "\n"
+			      "	Changes the operator selection mode.\n"
+			      "\n"
+			      "	<me>	ME name or * for every ME.\n"
+			      "\n"
+			      "	auto: Automatically select the best operator\n"
+			      "	none: Deregister and disable further registration attempts\n"
+			      "	LAI: Manually select the operator specified by LAI (MCC+MNC).\n"
+			      "\n"
+			      "	If 'fallback' is specified, fall back to automatic if\n"
+			      "	the manually selected operator is not available.\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_me_cli_operator_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+	int err;
+	
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 4) {
 		ast_cli(fd, "Missing ME name\n\n");
 		err = RESULT_SHOWUSAGE;
@@ -6391,59 +6924,93 @@ static int vgsm_me_cli_operator_func(int fd, int argc, char *argv[])
 			comm, 180 * SEC, "AT+COPS=%d,2,%05u",
 			mode, lai);
 	}
+#else
+	char *err1;
+	if (a->argc < 4) {
+		ast_cli(a->fd, "Missing ME name\n\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_me;
+	}
+	const char *me_name = a->argv[3];
 
+	if (a->argc < 5) {
+		ast_cli(a->fd, "Missing mode parameter\n\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_mode;
+	}
+	const char *mode = a->argv[4];
+
+	struct vgsm_me *me;
+	me = vgsm_me_get_by_name(me_name);
+	if (!me) {
+		ast_cli(a->fd, "Cannot find me '%s'\n", me_name);
+		err = RESULT_FAILURE;
+		goto err_me_not_found;
+	}
+
+	struct vgsm_comm *comm = &me->comm;
+
+	if (!strcasecmp(mode, "auto")) {
+		err = vgsm_req_make_wait_result(
+			comm, 180 * SEC, "AT+COPS=0,2");
+	} else if (!strcasecmp(mode, "none")) {
+		err = vgsm_req_make_wait_result(
+			comm, 180 * SEC, "AT+COPS=2,2");
+	} else {
+		int lai = atoi(mode);
+		int mode;
+
+		if (a->argc > 5 && !strcasecmp(a->argv[5], "fallback"))
+			mode = 4;
+		else
+			mode = 1;
+
+		err = vgsm_req_make_wait_result(
+			comm, 180 * SEC, "AT+COPS=%d,2,%05u",
+			mode, lai);
+	}
+#endif
 	vgsm_me_put(me);
 
 	if (err != VGSM_RESP_OK) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Error: %s (%d)\n",
+#else
+		ast_cli(a->fd, "Error: %s (%d)\n",
+#endif
 			vgsm_me_error_to_text(err),
 			err);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		return RESULT_FAILURE;
+#else
+		return CLI_FAILURE;
+#endif
 	}
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
+#else
+	return CLI_SUCCESS;
+#endif
 
 err_me_not_found:
 err_missing_mode:
 err_missing_me:
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return err;
-}
-
-static char *vgsm_me_cli_operator_complete(
-#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
-	char *line, char *word,
 #else
-	const char *line, const char *word,
+	if (err==RESULT_FAILURE)
+	   err1=CLI_FAILURE;
+	if (err==RESULT_SHOWUSAGE)
+	   err1=CLI_SHOWUSAGE;
+	if (err==RESULT_SUCCESS)
+	  err1=CLI_SUCCESS;
+	return err1;
 #endif
-	int pos, int state)
-{
-	char *modes[] = { "auto", "none", "<LAI>" };
-	char *options[] = { "fallback" };
-	int i;
-
-	switch(pos) {
-	case 3:
-		return vgsm_me_completion(line, word, state);
-
-	case 4:
-		for(i=state; i<ARRAY_SIZE(modes); i++) {
-			if (!strncasecmp(word, modes[i], strlen(word)))
-				return strdup(modes[i]);
-		}
-	break;
-
-	case 5:
-		for(i=state; i<ARRAY_SIZE(options); i++) {
-			if (!strncasecmp(word, options[i], strlen(word)))
-				return strdup(options[i]);
-		}
-	break;
-	}
-
-	return NULL;
+	
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_me_cli_operator_help[] =
 "Usage: vgsm me operator <me> <auto | none | LAI> [fallback]\n"
 "\n"
@@ -6466,13 +7033,67 @@ static struct ast_cli_entry vgsm_me_cli_operator =
 	vgsm_me_cli_operator_help,
 	vgsm_me_cli_operator_complete
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
 
-static int vgsm_me_cli_pin_set_func(int fd, int argc, char *argv[])
-{
-	int err;
 
+static char *vgsm_me_cli_pin_set_complete(
+#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
+	char *line, char *word,
+#else
+	const char *line, const char *word,
+#endif
+	int pos, int state)
+{
+	char *commands[] = { "enabled", "disabled" };
+	int i;
+
+	switch(pos) {
+	case 4:
+		return vgsm_me_completion(line, word, state);
+
+	case 6:
+		for(i=state; i<ARRAY_SIZE(commands); i++) {
+			if (!strncasecmp(word, commands[i], strlen(word)))
+				return strdup(commands[i]);
+		}
+	break;
+	}
+
+	return NULL;
+}
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_me_cli_pin_set_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_me_cli_pin_set_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm me pin set";
+		e->usage =   "Usage: vgsm pin set <me> <OLDPIN> <NEWPIN|enabled|disabled>\n"
+			     "\n"
+			     " Set, enable or disable the PIN on the SIM installed in me\n"
+			     " <me>.\n"
+			     "\n"
+			     "<me>		ME name\n"
+			     "<OLDPIN>	Current PIN\n"
+			     "<NEWPIN>	New PIN\n"
+			     "enabled		Enable PIN check on the SIM card\n"
+			     "disabled	Disable PIN check on the SIM card\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_me_cli_pin_set_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+
+	int err;
+	
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 5) {
 		ast_cli(fd, "Missing ME name\n");
 		err = RESULT_SHOWUSAGE;
@@ -6504,10 +7125,43 @@ static int vgsm_me_cli_pin_set_func(int fd, int argc, char *argv[])
 	me = vgsm_me_get_by_name(me_name);
 	if (!me) {
 		ast_cli(fd, "Cannot find ME '%s'\n", me_name);
+#else
+	char *err1;
+	if (a->argc < 5) {
+		ast_cli(a->fd, "Missing ME name\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_me;
+	}
+	const char *me_name = a->argv[4];
+
+	if (a->argc < 6) {
+		ast_cli(a->fd, "Missing OLDPIN\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_oldpin;
+	}
+	const char *oldpin = a->argv[5];
+
+	if (!vgsm_pin_valid(oldpin)) {
+		ast_cli(a->fd, "OLDPIN contains invalid characters\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_oldpin_invalid;
+	}
+
+	if (a->argc < 7) {
+		ast_cli(a->fd, "Missing NEWPIN\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_newpin;
+	}
+	const char *newpin = a->argv[6];
+
+	struct vgsm_me *me;
+	me = vgsm_me_get_by_name(me_name);
+	if (!me) {
+		ast_cli(a->fd, "Cannot find ME '%s'\n", me_name);
+#endif
 		err = RESULT_SHOWUSAGE;
 		goto err_me_not_found;
 	}
-
 	int res;
 	if (!strcasecmp(newpin, "enabled")) {
 		res = vgsm_req_make_wait_result(&me->comm, 180 * SEC,
@@ -6517,7 +7171,11 @@ static int vgsm_me_cli_pin_set_func(int fd, int argc, char *argv[])
 			"AT+CLCK=SC,0,\"%s\"", oldpin);
 	} else {
 		if (!vgsm_pin_valid(newpin)) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 			ast_cli(fd, "NEWPIN contains invalid characters\n");
+#else
+			ast_cli(a->fd, "NEWPIN contains invalid characters\n");
+#endif
 			err = RESULT_FAILURE;
 			goto err_newpin_invalid;
 		}
@@ -6528,15 +7186,22 @@ static int vgsm_me_cli_pin_set_func(int fd, int argc, char *argv[])
 	}
 
 	if (res != VGSM_RESP_OK) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Unable to complete command: %s (%d)\n",
+#else
+		ast_cli(a->fd, "Unable to complete command: %s (%d)\n",
+#endif
 			vgsm_me_error_to_text(res), res);
 		err = RESULT_FAILURE;
 		goto err_response;
 	}
 
 	vgsm_me_put(me);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
+#else
+	return CLI_SUCCESS; 
+#endif
 
 err_response:
 err_newpin_invalid:
@@ -6547,35 +7212,23 @@ err_oldpin_invalid:
 err_missing_oldpin:
 err_missing_me:
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return err;
-}
-
-static char *vgsm_me_cli_pin_set_complete(
-#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
-	char *line, char *word,
 #else
-	const char *line, const char *word,
+	if (err==RESULT_FAILURE)
+	    err1=CLI_FAILURE;
+	if (err==RESULT_SHOWUSAGE)
+	    err1=CLI_SHOWUSAGE;
+	if (err==RESULT_SUCCESS)
+	    err1=CLI_SUCCESS;
+
+      return err1;
 #endif
-	int pos, int state)
-{
-	char *commands[] = { "enabled", "disabled" };
-	int i;
-
-	switch(pos) {
-	case 4:
-		return vgsm_me_completion(line, word, state);
-
-	case 6:
-		for(i=state; i<ARRAY_SIZE(commands); i++) {
-			if (!strncasecmp(word, commands[i], strlen(word)))
-				return strdup(commands[i]);
-		}
-	break;
-	}
-
-	return NULL;
+	
 }
 
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_me_cli_pin_set_help[] =
 "Usage: vgsm pin set <me> <OLDPIN> <NEWPIN|enabled|disabled>\n"
 "\n"
@@ -6596,13 +7249,50 @@ static struct ast_cli_entry vgsm_me_cli_pin_set =
 	vgsm_me_cli_pin_set_help,
 	vgsm_me_cli_pin_set_complete,
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
-
-static int vgsm_me_cli_pin_input_func(int fd, int argc, char *argv[])
+static char *vgsm_me_cli_pin_input_complete(
+#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
+	char *line, char *word,
+#else
+	const char *line, const char *word,
+#endif
+	int pos, int state)
 {
-	int err;
+	switch(pos) {
+	case 4:
+		return vgsm_me_completion(line, word, state);
+	}
 
+	return NULL;
+}
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_me_cli_pin_input_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_me_cli_pin_input_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm me pin input";
+		e->usage =   "Usage: vgsm me pin input <me> <PIN>\n"
+			     "\n"
+			     "Manually input PIN to selected ME\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_me_cli_pin_input_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+
+
+	int err;
+	
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 5) {
 		ast_cli(fd, "Missing ME name\n");
 		err = RESULT_SHOWUSAGE;
@@ -6630,7 +7320,36 @@ static int vgsm_me_cli_pin_input_func(int fd, int argc, char *argv[])
 		err = RESULT_FAILURE;
 		goto err_me_not_found;
 	}
+#else
+	char *err1;
+	if (a->argc < 5) {
+		ast_cli(a->fd, "Missing ME name\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_no_me_name;
+	}
+	const char *me_name = a->argv[4];
 
+	if (a->argc < 6) {
+		ast_cli(a->fd, "Missing PIN\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_no_pin;
+	}
+	const char *pin = a->argv[5];
+
+	if (!vgsm_pin_valid(pin)) {
+		ast_cli(a->fd, "PIN contains invalid characters\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_pin_invalid;
+	}
+
+	struct vgsm_me *me;
+	me = vgsm_me_get_by_name(me_name);
+	if (!me) {
+		ast_cli(a->fd, "Cannot find ME '%s'\n", me_name);
+		err = RESULT_FAILURE;
+		goto err_me_not_found;
+	}
+#endif
 	struct vgsm_comm *comm = &me->comm;
 	struct vgsm_req *req;
 
@@ -6645,7 +7364,11 @@ static int vgsm_me_cli_pin_input_func(int fd, int argc, char *argv[])
 	first_line = vgsm_req_first_line(req);
 
 	if (!strcmp(first_line->text, "+CPIN: READY")) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "SIM is ready and not waiting for PIN\n");
+#else
+		ast_cli(a->fd, "SIM is ready and not waiting for PIN\n");
+#endif
 		err = RESULT_FAILURE;
 
 		if (me->status == VGSM_ME_STATUS_WAITING_PIN) {
@@ -6661,8 +7384,11 @@ static int vgsm_me_cli_pin_input_func(int fd, int argc, char *argv[])
 				"AT+CPIN=\"%s\"", pin);
 
 		if (res == CME_ERROR(100)) {
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 			ast_cli(fd, "Waiting up to 2 minutes for"
+#else
+			ast_cli(a->fd, "Waiting up to 2 minutes for"
+#endif
 					" initialization...\n");
 
 			int start_time = time(NULL);
@@ -6671,7 +7397,11 @@ static int vgsm_me_cli_pin_input_func(int fd, int argc, char *argv[])
 				sleep(1);
 
 				if (time(NULL) - start_time > 120) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 					ast_cli(fd,
+#else
+					ast_cli(a->fd,
+#endif
 						"Error: PIN input timeout\n");
 					err = RESULT_FAILURE;
 					goto err_send_pin;
@@ -6684,7 +7414,11 @@ static int vgsm_me_cli_pin_input_func(int fd, int argc, char *argv[])
 					vgsm_req_put(req2);
 					continue;
 				} else if (req2->err != VGSM_RESP_OK) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 					ast_cli(fd, "Error: %s (%d)\n",
+#else
+					ast_cli(a->fd, "Error: %s (%d)\n",
+#endif
 						vgsm_me_error_to_text(res),
 						res);
 					err = RESULT_FAILURE;
@@ -6696,7 +7430,11 @@ static int vgsm_me_cli_pin_input_func(int fd, int argc, char *argv[])
 				first_line = vgsm_req_first_line(req2);
 
 				if (strcmp(first_line->text, "+CPIN: READY")) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 					ast_cli(fd,
+#else	
+					ast_cli(a->fd,
+#endif
 						"Error: PIN not ready:"
 						" %s\n",
 						first_line->text);
@@ -6709,7 +7447,11 @@ static int vgsm_me_cli_pin_input_func(int fd, int argc, char *argv[])
 				}
 			}
 		} else if (res != VGSM_RESP_OK) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 			ast_cli(fd, "Error: %s (%d)\n",
+#else
+			ast_cli(a->fd, "Error: %s (%d)\n",
+#endif
 				vgsm_me_error_to_text(res), res);
 			err = RESULT_FAILURE;
 			goto err_send_pin;
@@ -6718,7 +7460,7 @@ static int vgsm_me_cli_pin_input_func(int fd, int argc, char *argv[])
 		vgsm_me_set_status(me,
 			VGSM_ME_STATUS_WAITING_INITIALIZATION,
 			0, "PIN entered");
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	} else if (!strcmp(first_line->text, "+CPIN: SIM PIN2")) {
 		ast_cli(fd, "SIM requires PIN2\n");
 		err = RESULT_FAILURE;
@@ -6736,11 +7478,33 @@ static int vgsm_me_cli_pin_input_func(int fd, int argc, char *argv[])
 		err = RESULT_FAILURE;
 		goto err_unknown_response;
 	}
-
+#else
+	} else if (!strcmp(first_line->text, "+CPIN: SIM PIN2")) {
+		ast_cli(a->fd, "SIM requires PIN2\n");
+		err = RESULT_FAILURE;
+		goto err_not_waiting_pin;
+	} else if (!strcmp(first_line->text, "+CPIN: SIM PUK")) {
+		ast_cli(a->fd, "SIM requires PUK\n");
+		err = RESULT_FAILURE;
+		goto err_not_waiting_pin;
+	} else if (!strcmp(first_line->text, "+CPIN: SIM PUK2")) {
+		ast_cli(a->fd, "SIM requires PUK2\n");
+		err = RESULT_FAILURE;
+		goto err_not_waiting_pin;
+	} else {
+		ast_cli(a->fd, "Unknown response '%s'\n", first_line->text);
+		err = RESULT_FAILURE;
+		goto err_unknown_response;
+	}
+#endif
 	vgsm_req_put(req);
 	vgsm_me_put(me);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
+#else	
+	return CLI_SUCCESS;
+#endif
+
 
 err_unknown_response:
 err_send_pin:
@@ -6752,26 +7516,20 @@ err_me_not_found:
 err_pin_invalid:
 err_no_pin:
 err_no_me_name:
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return err;
-}
-
-static char *vgsm_me_cli_pin_input_complete(
-#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
-	char *line, char *word,
 #else
-	const char *line, const char *word,
+	if (err==RESULT_FAILURE)
+	    err1=CLI_FAILURE;
+	if (err==RESULT_SHOWUSAGE)
+	    err1=CLI_SHOWUSAGE;
+	if (err==RESULT_SUCCESS)
+	    err1=CLI_SUCCESS;
+	return err1;
 #endif
-	int pos, int state)
-{
-	switch(pos) {
-	case 4:
-		return vgsm_me_completion(line, word, state);
-	}
 
-	return NULL;
 }
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_me_cli_pin_input_help[] =
 "Usage: vgsm me pin input <me> <PIN>\n"
 "\n"
@@ -6785,13 +7543,54 @@ static struct ast_cli_entry vgsm_me_cli_pin_input =
 	vgsm_me_cli_pin_input_help,
 	vgsm_me_cli_pin_input_complete,
 };
+#endif
 
 /*---------------------------------------------------------------------------*/
-
-static int vgsm_me_cli_puk_input_func(int fd, int argc, char *argv[])
+static char *vgsm_me_cli_puk_input_complete(
+#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
+	char *line, char *word,
+#else
+	const char *line, const char *word,
+#endif
+	int pos, int state)
 {
-	int err;
+	switch(pos) {
+	case 3:
+		return vgsm_me_completion(line, word, state);
+	}
 
+	return NULL;
+}
+
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_me_cli_puk_input_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_me_cli_puk_input_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm me puk input";
+		e->usage =   "Usage: vgsm me puk input <me> <PUK>\n"
+			     "\n"
+			     "	Manually input PUK to selected me\n"
+			     "\n"
+			     "	WARNING: Inputing the wrong PUK for 10 times will render the SIM card\n"
+			     "  useless, you will need to have it replaced from your\n"
+			     "	operator.\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_me_cli_puk_input_complete(a->line, a->word, a->pos, a->n);
+	}
+	
+#endif
+	int err;
+	
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 4) {
 		ast_cli(fd, "Missing ME name\n");
 		err = RESULT_SHOWUSAGE;
@@ -6818,17 +7617,54 @@ static int vgsm_me_cli_puk_input_func(int fd, int argc, char *argv[])
 		goto err_no_newpin;
 	}
 	const char *newpin = argv[5];
-
 	if (!vgsm_pin_valid(newpin)) {
 		ast_cli(fd, "NEWPIN contains invalid characters\n");
 		err = RESULT_FAILURE;
 		goto err_newpin_invalid;
 	}
 
+#else
+	char *err1;
+	if (a->argc < 4) {
+		ast_cli(a->fd, "Missing ME name\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_no_me_name;
+	}
+	const char *me_name = a->argv[3];
+
+	if (a->argc < 5) {
+		ast_cli(a->fd, "Missing PUK\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_no_puk;
+	}
+	const char *puk = a->argv[4];
+
+	if (!vgsm_pin_valid(puk)) {
+		ast_cli(a->fd, "PUK contains invalid characters\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_puk_invalid;
+	}
+
+	if (a->argc < 6) {
+		ast_cli(a->fd, "Missing NEWPIN\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_no_newpin;
+	}
+	const char *newpin = a->argv[5];
+	if (!vgsm_pin_valid(newpin)) {
+		ast_cli(a->fd, "NEWPIN contains invalid characters\n");
+		err = RESULT_FAILURE;
+		goto err_newpin_invalid;
+	}
+#endif
 	struct vgsm_me *me;
 	me = vgsm_me_get_by_name(me_name);
 	if (!me) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Cannot find ME '%s'\n", me_name);
+#else
+		ast_cli(a->fd, "Cannot find ME '%s'\n", me_name);
+#endif
 		err = RESULT_FAILURE;
 		goto err_me_not_found;
 	}
@@ -6847,7 +7683,7 @@ static int vgsm_me_cli_puk_input_func(int fd, int argc, char *argv[])
 
 	const struct vgsm_req_line *first_line;
 	first_line = vgsm_req_first_line(req);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (!strcmp(first_line->text, "+CPIN: READY")) {
 		ast_cli(fd, "SIM is ready and not waiting for PIN\n");
 		err = RESULT_FAILURE;
@@ -6861,11 +7697,29 @@ static int vgsm_me_cli_puk_input_func(int fd, int argc, char *argv[])
 		err = RESULT_FAILURE;
 		goto err_invalid_state;
 	} else if (!strcmp(first_line->text, "+CPIN: SIM PUK")) {
-
+#else
+	if (!strcmp(first_line->text, "+CPIN: READY")) {
+		ast_cli(a->fd, "SIM is ready and not waiting for PIN\n");
+		err = RESULT_FAILURE;
+		goto err_invalid_state;
+	} else if (!strcmp(first_line->text, "+CPIN: SIM PIN")) {
+		ast_cli(a->fd, "SIM requires PIN\n");
+		err = RESULT_FAILURE;
+		goto err_invalid_state;
+	} else if (!strcmp(first_line->text, "+CPIN: SIM PIN2")) {
+		ast_cli(a->fd, "SIM requires PIN2\n");
+		err = RESULT_FAILURE;
+		goto err_invalid_state;
+	} else if (!strcmp(first_line->text, "+CPIN: SIM PUK")) {
+#endif
 		int err = vgsm_req_make_wait_result(comm, 180 * SEC,
 				"AT+CPIN=\"%s\",\"%s\"", puk, newpin);
 		if (err != VGSM_RESP_OK) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 			ast_cli(fd, "Error: %s (%d)\n",
+#else
+			ast_cli(a->fd, "Error: %s (%d)\n",
+#endif
 				vgsm_me_error_to_text(err), err);
 			err = RESULT_FAILURE;
 		goto err_invalid_state;
@@ -6876,21 +7730,30 @@ static int vgsm_me_cli_puk_input_func(int fd, int argc, char *argv[])
 			"PUK entered");
 
 	} else if (!strcmp(first_line->text, "+CPIN: SIM PUK2")) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "SIM requires PUK2\n");
+#else
+		ast_cli(a->fd, "SIM requires PUK2\n");
+#endif
 		err = RESULT_FAILURE;
 		goto err_invalid_state;
 	} else {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Unknown response '%s'\n", first_line->text);
-
+#else	
+		ast_cli(a->fd, "Unknown response '%s'\n", first_line->text);
+#endif
 		err = RESULT_FAILURE;
 		goto err_unknown_response;
 	}
 
 	vgsm_req_put(req);
 	vgsm_me_put(me);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
-
+#else
+	return CLI_SUCCESS;
+#endif
 err_unknown_response:
 err_invalid_state:
 	vgsm_req_put(req);
@@ -6902,26 +7765,20 @@ err_no_newpin:
 err_puk_invalid:
 err_no_puk:
 err_no_me_name:
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return err;
-}
-
-static char *vgsm_me_cli_puk_input_complete(
-#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
-	char *line, char *word,
 #else
-	const char *line, const char *word,
+	if (err==RESULT_FAILURE)
+	    err1=CLI_FAILURE;
+	if (err==RESULT_SHOWUSAGE)
+	    err1=CLI_SHOWUSAGE;
+	if (err==RESULT_SUCCESS)
+	    err1=CLI_SUCCESS;
+	return err1;
 #endif
-	int pos, int state)
-{
-	switch(pos) {
-	case 3:
-		return vgsm_me_completion(line, word, state);
-	}
-
-	return NULL;
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_me_cli_puk_input_help[] =
 "Usage: vgsm me puk input <me> <PUK>\n"
 "\n"
@@ -6939,13 +7796,59 @@ static struct ast_cli_entry vgsm_me_cli_puk_input =
 	vgsm_me_cli_puk_input_help,
 	vgsm_me_cli_puk_input_complete,
 };
+#endif
 
 /*---------------------------------------------------------------------------*/
-
-static int vgsm_me_cli_sms_send_func(int fd, int argc, char *argv[])
+static char *vgsm_me_cli_sms_send_complete(
+#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
+	char *line, char *word,
+#else
+	const char *line, const char *word,
+#endif
+	int pos, int state)
 {
-	int err = RESULT_SUCCESS;
+	switch(pos) {
+	case 4:
+		return vgsm_me_completion(line, word,state);
+	}
 
+	return NULL;
+}
+
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_me_cli_sms_send_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_me_cli_sms_send_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+
+{	
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm me sms send";
+		e->usage =   "Usage: vgsm me sms send <me> <number> <text> [class]\n"
+			     "\n"
+			     " Send short message to <number> using me <me>.\n"
+			     "\n"
+			     "<text> is the text to send, in 7-bit ASCII format.\n"
+			     "This is meant to be just a testing command, other charsets beside\n"
+			     "ASCII are not supported, neither are various other SMS parameters;\n"
+			     "\n"
+			     "The full SMS interface is implemented throught the manager\n"
+			     "interface.\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_me_cli_sms_send_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+	
+	int err = RESULT_SUCCESS;
+	
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 5) {
 		ast_cli(fd, "Missing me\n");
 		err = RESULT_SHOWUSAGE;
@@ -6966,11 +7869,37 @@ static int vgsm_me_cli_sms_send_func(int fd, int argc, char *argv[])
 		goto err_missing_text;
 	}
 	const char *text = argv[6];
+#else
+	char *err1;
+	if (a->argc < 5) {
+		ast_cli(a->fd, "Missing me\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_me;
+	}
+	const char *me_name = a->argv[4];
 
+	if (a->argc < 6) {
+		ast_cli(a->fd, "Missing phone number\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_number;
+	}
+	const char *phone_number = a->argv[5];
+
+	if (a->argc < 7) {
+		ast_cli(a->fd, "Missing text\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_text;
+	}
+	const char *text = a->argv[6];
+#endif
 	struct vgsm_me *me;
 	me = vgsm_me_get_by_name(me_name);
 	if (!me) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Cannot find ME '%s'\n", me_name);
+#else
+		ast_cli(a->fd, "Cannot find ME '%s'\n", me_name);
+#endif
 		err = RESULT_FAILURE;
 		goto err_me_not_found;
 	}
@@ -6979,8 +7908,11 @@ static int vgsm_me_cli_sms_send_func(int fd, int argc, char *argv[])
 
 	if (me->status != VGSM_ME_STATUS_READY) {
 		ast_mutex_unlock(&me->lock);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "ME '%s' is not ready\n", me->name);
+#else
+		ast_cli(a->fd, "ME '%s' is not ready\n", me->name);
+#endif
 		err = RESULT_FAILURE;
 		goto err_me_not_ready;
 	}
@@ -6988,16 +7920,22 @@ static int vgsm_me_cli_sms_send_func(int fd, int argc, char *argv[])
 	if (me->net.status != VGSM_NET_STATUS_REGISTERED_HOME &&
 	    me->net.status != VGSM_NET_STATUS_REGISTERED_ROAMING) {
 		ast_mutex_unlock(&me->lock);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "ME %s not registered\n", me->name);
+#else
+		ast_cli(a->fd, "ME %s not registered\n", me->name);
+#endif
 		err = RESULT_FAILURE;
 		goto err_me_not_registered;
 	}
 
 	if (me->sending_sms) {
 		ast_mutex_unlock(&me->lock);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "ME '%s' is already sending a SMS\n", me->name);
+#else
+		ast_cli(a->fd, "ME '%s' is already sending a SMS\n", me->name);
+#endif
 		err = RESULT_FAILURE;
 		goto err_already_sending_sms;
 	}
@@ -7008,8 +7946,11 @@ static int vgsm_me_cli_sms_send_func(int fd, int argc, char *argv[])
 	sms = vgsm_sms_submit_alloc();
 	if (!sms) {
 		ast_mutex_unlock(&me->lock);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Cannot allocate SMS\n");
+#else
+		ast_cli(a->fd, "Cannot allocate SMS\n");
+#endif
 		err = RESULT_FAILURE;
 		goto err_sms_alloc;
 	}
@@ -7024,7 +7965,11 @@ static int vgsm_me_cli_sms_send_func(int fd, int argc, char *argv[])
 	} else {
 		ast_mutex_unlock(&me->lock);
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Services Center number not set\n");
+#else
+		ast_cli(a->fd, "Services Center number not set\n");
+#endif
 		err = RESULT_FAILURE;
 		goto err_no_smcc;
 	}
@@ -7032,13 +7977,21 @@ static int vgsm_me_cli_sms_send_func(int fd, int argc, char *argv[])
 	ast_mutex_unlock(&me->lock);
 
 	if (vgsm_number_parse(&sms->dest, phone_number) < 0) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Number '%s' is invalid\n", phone_number);
+#else
+		ast_cli(a->fd, "Number '%s' is invalid\n", phone_number);
+#endif
 		err = RESULT_FAILURE;
 		goto err_invalid_number;
 	}
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc >= 8)
 		sms->message_class = atoi(argv[7]);
+#else
+	if (a->argc >= 8)
+		sms->message_class = atoi(a->argv[7]);
+#endif
 	else
 		sms->message_class = 1;
 
@@ -7056,11 +8009,19 @@ static int vgsm_me_cli_sms_send_func(int fd, int argc, char *argv[])
 
 	err = vgsm_sms_submit_prepare(sms);
 	if (err == -ENOSPC) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Message too big\n");
+#else
+		ast_cli(a->fd, "Message too big\n");
+#endif
 		err = RESULT_FAILURE;
 		goto err_submit_prepare;
 	} else if (err < 0) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Invalid message content\n");
+#else
+		ast_cli(a->fd, "Invalid message content\n");
+#endif
 		err = RESULT_FAILURE;
 		goto err_submit_prepare;
 	}
@@ -7074,7 +8035,11 @@ static int vgsm_me_cli_sms_send_func(int fd, int argc, char *argv[])
 	int res = vgsm_req_status(req);
 	if (res != VGSM_RESP_OK) {
 		vgsm_req_put(req);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd,
+#else
+		ast_cli(a->fd,
+#endif
 			"Error sending SMS: %s (%d)\n",
 			vgsm_me_error_to_text(res),
 			res);
@@ -7089,8 +8054,11 @@ static int vgsm_me_cli_sms_send_func(int fd, int argc, char *argv[])
 	ast_mutex_unlock(&me->lock);
 
 	vgsm_me_put(me);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
+#else
+	return CLI_SUCCESS;
+#endif
 
 err_req_make:
 err_submit_prepare:
@@ -7111,26 +8079,22 @@ err_me_not_found:
 err_missing_text:
 err_missing_number:
 err_missing_me:
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return err;
-}
-
-static char *vgsm_me_cli_sms_send_complete(
-#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
-	char *line, char *word,
 #else
-	const char *line, const char *word,
+	if (err==RESULT_FAILURE)
+	   err1=CLI_FAILURE;
+	if (err==RESULT_SHOWUSAGE)
+	   err1=CLI_SHOWUSAGE;
+	if (err==RESULT_SUCCESS)
+	   err1=CLI_SUCCESS;
+return err1;
 #endif
-	int pos, int state)
-{
-	switch(pos) {
-	case 4:
-		return vgsm_me_completion(line, word,state);
-	}
 
-	return NULL;
 }
 
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_me_cli_sms_send_help[] =
 "Usage: vgsm me sms send <me> <number> <text> [class]\n"
 "\n"
@@ -7151,12 +8115,58 @@ static struct ast_cli_entry vgsm_me_cli_sms_send =
 	vgsm_me_cli_sms_send_help,
 	vgsm_me_cli_sms_send_complete,
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
-static int vgsm_me_cli_forwarding_func(int fd, int argc, char *argv[])
-{
-	int err;
 
+static char *vgsm_me_cli_forwarding_complete(
+#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
+	char *line, char *word,
+#else
+	const char *line, const char *word,
+#endif
+	int pos, int state)
+{
+	char *commands[] = { "off" };
+	int i;
+
+	switch(pos) {
+	case 3:
+		return vgsm_me_completion(line, word, state);
+	case 4:
+		for(i=state; i<ARRAY_SIZE(commands); i++) {
+			if (!strncasecmp(word, commands[i], strlen(word)))
+				return strdup(commands[i]);
+		}
+	}
+
+	return NULL;
+}
+
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_me_cli_forwarding_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_me_cli_forwarding_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm me forwarding";
+		e->usage =   "Usage: vgsm me forwarding <me> <set|>\n"
+			     "\n"
+			     "Set call forwarding for the specified me (not yet implemented)\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_me_cli_forwarding_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+	int err;
+	
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 4) {
 		ast_cli(fd, "Missing ME name\n");
 		err = RESULT_SHOWUSAGE;
@@ -7188,44 +8198,66 @@ static int vgsm_me_cli_forwarding_func(int fd, int argc, char *argv[])
 		err = RESULT_SHOWUSAGE;
 		goto err_unknown_command;
 	}
+#else
+	char *err1;
+		if (a->argc < 4) {
+		ast_cli(a->fd, "Missing ME name\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_no_me_name;
+	}
+	const char *me_name = a->argv[3];
 
+	if (a->argc < 5) {
+		ast_cli(a->fd, "Missing command\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_no_command;
+	}
+	const char *command = a->argv[4];
+
+	struct vgsm_me *me;
+	me = vgsm_me_get_by_name(me_name);
+	if (!me) {
+		ast_cli(a->fd, "Cannot find ME '%s'\n", me_name);
+		err = RESULT_FAILURE;
+		goto err_me_not_found;
+	}
+
+	if (!strcasecmp(command, "off")) {
+//		err = do_vgsm_me_cli_forwarding_off(fd, me);
+//		if (err != RESULT_SUCCESS)
+//			goto err_forwarding_off;
+	} else {
+		ast_cli(a->fd, "Unknown command '%s'\n", command);
+		err = RESULT_SHOWUSAGE;
+		goto err_unknown_command;
+	}
+#endif
 	vgsm_me_put(me);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
+#else
+	return CLI_SUCCESS;
+#endif
 
 err_unknown_command:
 	vgsm_me_put(me);
 err_me_not_found:
 err_no_command:
 err_no_me_name:
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return err;
-}
-
-static char *vgsm_me_cli_forwarding_complete(
-#if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
-	char *line, char *word,
 #else
-	const char *line, const char *word,
+	if (err==RESULT_FAILURE)
+	   err1=CLI_FAILURE;
+	if (err==RESULT_SHOWUSAGE)
+	   err1=CLI_SHOWUSAGE;
+	if (err==RESULT_SUCCESS)
+	   err1=CLI_SUCCESS;
+	return err1;
 #endif
-	int pos, int state)
-{
-	char *commands[] = { "off" };
-	int i;
-
-	switch(pos) {
-	case 3:
-		return vgsm_me_completion(line, word, state);
-	case 4:
-		for(i=state; i<ARRAY_SIZE(commands); i++) {
-			if (!strncasecmp(word, commands[i], strlen(word)))
-				return strdup(commands[i]);
-		}
 	}
 
-	return NULL;
-}
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_me_cli_forwarding_help[] =
 "Usage: vgsm me forwarding <me> <set|>\n"
 "\n"
@@ -7239,64 +8271,8 @@ static struct ast_cli_entry vgsm_me_cli_forwarding =
 	vgsm_me_cli_forwarding_help,
 	vgsm_me_cli_forwarding_complete
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
-
-static int vgsm_me_cli_rawcommand_func(int fd, int argc, char *argv[])
-{
-	int err;
-
-	if (argc < 4) {
-		ast_cli(fd, "Missing ME name\n");
-		err = RESULT_SHOWUSAGE;
-		goto err_missing_me;
-	}
-	const char *me_name = argv[3];
-
-	if (argc < 5) {
-		ast_cli(fd, "Missing command\n");
-		err = RESULT_SHOWUSAGE;
-		goto err_missing_command;
-	}
-	const char *command = argv[4];
-
-	struct vgsm_me *me;
-	me = vgsm_me_get_by_name(me_name);
-	if (!me) {
-		ast_cli(fd, "Cannot find me '%s'\n", me_name);
-		err = RESULT_FAILURE;
-		goto err_me_not_found;
-	}
-
-	struct vgsm_req *req;
-	req = vgsm_req_make_wait(&me->comm, 5 * SEC, "%s", command);
-	if (vgsm_req_status(req) != VGSM_RESP_OK) {
-		ast_cli(fd, "Error: %s (%d)\n",
-			vgsm_me_error_to_text(vgsm_req_status(req)),
-			vgsm_req_status(req));
-		vgsm_req_put(req);
-		err = RESULT_FAILURE;
-		goto err_req_make;
-	}
-
-	struct vgsm_req_line *line;
-	list_for_each_entry(line, &req->lines, node)
-		ast_cli(fd, "%s\n", line->text);
-
-	vgsm_req_put(req);
-	vgsm_me_put(me);
-
-	return RESULT_SUCCESS;
-
-err_req_make:
-	vgsm_me_put(me);
-err_me_not_found:
-err_missing_command:
-err_missing_me:
-
-	return err;
-}
-
 static char *vgsm_me_cli_rawcommand_complete(
 #if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
 	char *line, char *word,
@@ -7313,6 +8289,120 @@ static char *vgsm_me_cli_rawcommand_complete(
 	return NULL;
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_me_cli_rawcommand_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_me_cli_rawcommand_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm me rawcommand";
+		e->usage =   "Usage: vgsm me rawcommand <me> <command>\n"
+			     "\n"
+			     " Send a raw AT command. Only for debugging purposes!\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_me_cli_rawcommand_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+
+	int err;
+	
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	if (argc < 4) {
+		ast_cli(fd, "Missing ME name\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_me;
+	}
+	const char *me_name = argv[3];
+
+	if (argc < 5) {
+		ast_cli(fd, "Missing command\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_command;
+	}
+	const char *command = argv[4];
+#else
+	char *err1;
+	if (a->argc < 4) {
+		ast_cli(a->fd, "Missing ME name\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_me;
+	}
+	const char *me_name = a->argv[3];
+
+	if (a->argc < 5) {
+		ast_cli(a->fd, "Missing command\n");
+		err = RESULT_SHOWUSAGE;
+		goto err_missing_command;
+	}
+	const char *command = a->argv[4];
+#endif
+	struct vgsm_me *me;
+	me = vgsm_me_get_by_name(me_name);
+	if (!me) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+		ast_cli(fd, "Cannot find me '%s'\n", me_name);
+#else
+		ast_cli(a->fd, "Cannot find me '%s'\n", me_name);
+#endif
+		err = RESULT_FAILURE;
+		goto err_me_not_found;
+	}
+	struct vgsm_req *req;
+	req = vgsm_req_make_wait(&me->comm, 5 * SEC, "%s", command);
+	if (vgsm_req_status(req) != VGSM_RESP_OK) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+		ast_cli(fd, "Error: %s (%d)\n",
+#else	
+		ast_cli(a->fd, "Error: %s (%d)\n",
+#endif
+			vgsm_me_error_to_text(vgsm_req_status(req)),
+			vgsm_req_status(req));
+		vgsm_req_put(req);
+		err = RESULT_FAILURE;
+		goto err_req_make;
+	}
+	struct vgsm_req_line *line;
+	list_for_each_entry(line, &req->lines, node)
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+		ast_cli(fd, "%s\n", line->text);
+#else
+		ast_cli(a->fd, "%s\n", line->text);
+#endif
+	vgsm_req_put(req);
+	vgsm_me_put(me);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	return RESULT_SUCCESS;
+#else
+	return CLI_SUCCESS;
+#endif
+
+err_req_make:
+	vgsm_me_put(me);
+err_me_not_found:
+err_missing_command:
+err_missing_me:
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	return err;
+#else
+	if (err==RESULT_FAILURE)
+	   err1=CLI_FAILURE;
+	if (err==RESULT_SHOWUSAGE)
+	   err1=CLI_SHOWUSAGE;
+	if (err==RESULT_SUCCESS)
+	   err1=CLI_SUCCESS;
+	return err1;
+#endif
+}
+
+
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_me_cli_rawcommand_help[] =
 "Usage: vgsm me rawcommand <me> <command>\n"
 "\n"
@@ -7326,7 +8416,7 @@ static struct ast_cli_entry vgsm_me_cli_rawcommand =
 	vgsm_me_cli_rawcommand_help,
 	vgsm_me_cli_rawcommand_complete
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
 
 #ifdef DEBUG_CODE
@@ -7489,15 +8579,23 @@ static int vgsm_me_cli_debug_all(int fd, BOOL enable)
 
 	return RESULT_SUCCESS;
 }
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 static int vgsm_me_cli_debug_do(int fd, int argc, char *argv[],
 				int args, BOOL enable)
+#else
+static char *vgsm_me_cli_debug_do(int fd, int argc, char *argv[],
+				int args, BOOL enable)
+#endif
+
 {
 	int err = 0;
 
 	if (argc < args)
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		return RESULT_SHOWUSAGE;
-
+#else	
+		return CLI_SHOWUSAGE;
+#endif
 	struct vgsm_me *me = NULL;
 
 	if (argc < args + 1) {
@@ -7508,10 +8606,14 @@ static int vgsm_me_cli_debug_do(int fd, int argc, char *argv[],
 			if (!me) {
 				ast_cli(fd, "Cannot find me '%s'\n",
 					argv[args]);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 				return RESULT_FAILURE;
+#else
+				return CLI_FAILURE;
+#endif
+
 			}
 		}
-
 		if (!strcasecmp(argv[args], "state"))
 			err = vgsm_me_cli_debug_state(fd, me, enable);
 		else if (!strcasecmp(argv[args], "call"))
@@ -7541,21 +8643,23 @@ static int vgsm_me_cli_debug_do(int fd, int argc, char *argv[],
 	}
 
 	if (err)
-		return err;
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	return err;
+#else
+	if (err==RESULT_FAILURE)
+	   return CLI_FAILURE;
+	if (err==RESULT_SHOWUSAGE)
+	   return CLI_SHOWUSAGE;
+	if (err==RESULT_SUCCESS)
+	   return CLI_SUCCESS;
+#endif
+		
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
+#else
+	return CLI_SUCCESS;
+#endif
 }
-
-static int vgsm_me_cli_debug_func(int fd, int argc, char *argv[])
-{
-	return vgsm_me_cli_debug_do(fd, argc, argv, 3, TRUE);
-}
-
-static int vgsm_me_cli_no_debug_func(int fd, int argc, char *argv[])
-{
-	return vgsm_me_cli_debug_do(fd, argc, argv, 4, FALSE);
-}
-
 static char *vgsm_me_cli_debug_category_complete(
 #if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
 	char *line, char *word,
@@ -7614,6 +8718,77 @@ static char *vgsm_me_cli_no_debug_complete(
 	return NULL;
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_me_cli_debug_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_me_cli_debug_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm me debug";
+		e->usage =   "Usage: vgsm me debug [<state | call | atcommands | serial | sms | cbm |\n"
+			     " jitbuf | frames> [me]]\n"
+			     "\n"
+			     "	Debug vGSM's me-related events\n"
+			     "\n"
+  			     "	state		ME state transitions\n"
+			     "	call		Call-related messages\n"
+			     "	atcommands	AT-commands sent or received on the serial port\n"
+			     "	serial		low-level serial communication, including line buffer\n"
+			     "			and read()/write() calls. Caution: It can be very\n"
+			     "			verbose.\n"
+			     "	sms		SMS-DELIVER and SMS-STATUS-REPORT messages\n"
+			     "	cbm		Cell-broadcast messages\n"
+			     "	jitbuf		Audio jitter buffer\n"
+			     "	frames		Audio frames\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_me_cli_debug_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	return vgsm_me_cli_debug_do(fd, argc, argv, 3, TRUE);
+#else
+	return vgsm_me_cli_debug_do(a->fd, a->argc, a->argv, 3, TRUE);
+#endif
+}
+
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_me_cli_no_debug_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_me_cli_no_debug_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm me no debug";
+		e->usage =   "Usage: Disable ME debugging";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_me_cli_no_debug_complete(a->line, a->word, a->pos, a->n);
+	}
+
+#endif
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	return vgsm_me_cli_debug_do(fd, argc, argv, 4, FALSE);
+#else
+	return vgsm_me_cli_debug_do(a->fd, a->argc, a->argv, 4, FALSE);
+#endif
+}
+
+
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+
 static char vgsm_me_cli_debug_help[] =
 "Usage: vgsm me debug [<state | call | atcommands | serial | sms | cbm |\n"
 "			 jitbuf | frames> [me]]\n"
@@ -7649,13 +8824,41 @@ static struct ast_cli_entry vgsm_me_cli_no_debug =
 	vgsm_me_cli_no_debug_complete
 };
 #endif
+#endif
+
 
 /*---------------------------------------------------------------------------*/
+/*! \brief SIP Cli commands definition */
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+
+#else
+static struct ast_cli_entry cli_ks[] = {
+	AST_CLI_DEFINE(vgsm_me_show_cli, "vgsm me show"),
+	AST_CLI_DEFINE(vgsm_me_cli_power_func, "vgsm me cli power"),
+	AST_CLI_DEFINE(vgsm_me_cli_reset_func, "vgsm me cli reset"),
+	AST_CLI_DEFINE(vgsm_me_cli_service_func, "vgsm me cli service"),
+	AST_CLI_DEFINE(vgsm_me_cli_identify_func, "vgsm me cli identify"),
+	AST_CLI_DEFINE(vgsm_me_cli_operator_func, "vgsm me cli operator"),
+	AST_CLI_DEFINE(vgsm_me_cli_pin_set_func, "vgsm me cli pin set"),
+	AST_CLI_DEFINE(vgsm_me_cli_pin_input_func, "vgsm me cli pin input"),
+	AST_CLI_DEFINE(vgsm_me_cli_puk_input_func, "vgsm me cli puk input"),
+	AST_CLI_DEFINE(vgsm_me_cli_sms_send_func, "vgsm me cli sms send"),
+	AST_CLI_DEFINE(vgsm_me_cli_forwarding_func, "vgsm me cli forwarding"),
+	AST_CLI_DEFINE(vgsm_me_cli_rawcommand_func, "vgsm me cli rawcommand"),
+};
+static struct ast_cli_entry cli_ksdb[] = {
+	AST_CLI_DEFINE(vgsm_me_cli_debug_func, "vgsm me cli debug"),
+	AST_CLI_DEFINE(vgsm_me_cli_no_debug_func, "vgsm me cli no debug"),
+};
+#endif
+
+
+
 
 int vgsm_me_load(void)
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_register(&vgsm_me_show);
-
 	ast_cli_register(&vgsm_me_cli_power);
 	ast_cli_register(&vgsm_me_cli_reset);
 	ast_cli_register(&vgsm_me_cli_service);
@@ -7667,10 +8870,17 @@ int vgsm_me_load(void)
 	ast_cli_register(&vgsm_me_cli_sms_send);
 	ast_cli_register(&vgsm_me_cli_forwarding);
 	ast_cli_register(&vgsm_me_cli_rawcommand);
+#else
+	ast_cli_register_multiple(cli_ks, ARRAY_LEN(cli_ks));
+#endif
 
 #ifdef DEBUG_CODE
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_register(&vgsm_me_cli_debug);
 	ast_cli_register(&vgsm_me_cli_no_debug);
+#else
+	ast_cli_register_multiple(cli_ksdb, ARRAY_LEN(cli_ksdb));
+#endif
 #endif
 
 	return 0;
@@ -7679,10 +8889,14 @@ int vgsm_me_load(void)
 int vgsm_me_unload(void)
 {
 #ifdef DEBUG_CODE
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_unregister(&vgsm_me_cli_no_debug);
 	ast_cli_unregister(&vgsm_me_cli_debug);
+#else
+	ast_cli_unregister_multiple(cli_ksdb, ARRAY_LEN(cli_ksdb));
 #endif
-
+#endif
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_unregister(&vgsm_me_cli_rawcommand);
 	ast_cli_unregister(&vgsm_me_cli_forwarding);
 	ast_cli_unregister(&vgsm_me_cli_sms_send);
@@ -7694,8 +8908,10 @@ int vgsm_me_unload(void)
 	ast_cli_unregister(&vgsm_me_cli_service);
 	ast_cli_unregister(&vgsm_me_cli_reset);
 	ast_cli_unregister(&vgsm_me_cli_power);
-
 	ast_cli_unregister(&vgsm_me_show);
+#else
+	ast_cli_unregister_multiple(cli_ks, ARRAY_LEN(cli_ks));
+#endif
 
 	return 0;
 }

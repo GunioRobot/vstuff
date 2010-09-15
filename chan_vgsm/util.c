@@ -21,6 +21,11 @@
 #include <stdarg.h>
 
 #include <sys/time.h>
+#include <asterisk/version.h>
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+#else
+#include <asterisk.h>
+#endif
 
 #include <asterisk/logger.h>
 

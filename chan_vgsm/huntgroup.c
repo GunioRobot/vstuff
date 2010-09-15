@@ -18,6 +18,11 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+#include <asterisk/version.h>
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+#else
+#include <asterisk.h>
+#endif
 #include <asterisk/lock.h>
 #include <asterisk/channel.h>
 #include <asterisk/config.h>
@@ -25,7 +30,7 @@
 #include <asterisk/module.h>
 #include <asterisk/options.h>
 #include <asterisk/cli.h>
-#include <asterisk/version.h>
+
 
 #include "chan_vgsm.h"
 #include "util.h"
@@ -324,22 +329,49 @@ static void vgsm_hg_show_details(
 	}
 	ast_cli(fd, "\n\n");
 }
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int vgsm_hg_show_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_hg_show_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm huntgroup show";
+		e->usage =   "Usage: vgsm huntgroups show [<huntgroup>]\n"
+			     "\n"
+			     "	Displays detailed informations on vGSM's huntgroup or lists all the\n"
+  			     "	available huntgroups if <huntgroup> has not been specified.\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_hg_show_complete(a->line, a->word, a->pos, a->n);
+	}
+#endif	
 	ast_rwlock_rdlock(&vgsm.huntgroups_list_lock);
 
 	struct vgsm_huntgroup *hg;
 	list_for_each_entry(hg, &vgsm.huntgroups_list, node) {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		if (argc != 4 || !strcasecmp(argv[3], hg->name))
 			vgsm_hg_show_details(fd, hg);
+#else
+		if (a->argc != 4 || !strcasecmp(a->argv[3], hg->name))
+			vgsm_hg_show_details(a->fd, hg);
+#endif
 	}
 
 	ast_rwlock_unlock(&vgsm.huntgroups_list_lock);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
+#else	
+	return CLI_SUCCESS;
+#endif
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_hg_show_help[] =
 "Usage: vgsm huntgroups show [<huntgroup>]\n"
 "\n"
@@ -354,7 +386,7 @@ static struct ast_cli_entry vgsm_hg_show =
 	vgsm_hg_show_help,
 	vgsm_hg_show_complete
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
 
 static struct vgsm_huntgroup_member *vgsm_hg_find_member(
@@ -513,15 +545,24 @@ static int vgsm_hg_cli_debug_all(int fd, BOOL enable)
 
 	return RESULT_SUCCESS;
 }
-
-static int vgsm_hg_cli_debug_do(int fd, int argc, char *argv[],
-				int args, BOOL enable)
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_hg_cli_debug_do (int fd, int argc, char *argv[],
+				  int args, BOOL enable)
+#else
+static char *vgsm_hg_cli_debug_do (int fd, int argc, char *argv[],
+				    int args, BOOL enable)
+#endif
 {
 	int err = 0;
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	if (argc < args)
 		return RESULT_SHOWUSAGE;
-
+#else
+	char *err1;
+	if (argc < args)
+		return CLI_SHOWUSAGE;
+#endif
 	struct vgsm_huntgroup *hg = NULL;
 
 	if (argc <= args) {
@@ -531,28 +572,33 @@ static int vgsm_hg_cli_debug_do(int fd, int argc, char *argv[],
 		if (!hg) {
 			ast_cli(fd, "Cannot find huntgroup '%s'\n",
 				argv[args]);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 			return RESULT_FAILURE;
+#else	
+			return CLI_FAILURE;
+#endif
 		}
-
 		hg->debug = enable;
-
 		vgsm_hg_put(hg);
 	}
 
 	if (err)
-		return err;
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	return err;
+#else
+	if (err==RESULT_FAILURE)
+	    err1=CLI_FAILURE;
+	if (err==RESULT_SHOWUSAGE)
+	    err1=CLI_SHOWUSAGE;
+	if (err==RESULT_SUCCESS)
+	    err1=CLI_SUCCESS;
+	return err1;
+#endif
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
-}
-
-static int vgsm_hg_cli_debug_func(int fd, int argc, char *argv[])
-{
-	return vgsm_hg_cli_debug_do(fd, argc, argv, 3, TRUE);
-}
-
-static int vgsm_hg_cli_no_debug_func(int fd, int argc, char *argv[])
-{
-	return vgsm_hg_cli_debug_do(fd, argc, argv, 4, FALSE);
+#else
+	return CLI_SUCCESS;
+#endif
 }
 
 static char *vgsm_hg_cli_debug_complete(
@@ -588,7 +634,63 @@ static char *vgsm_hg_cli_no_debug_complete(
 
 	return NULL;
 }
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_hg_cli_debug_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_hg_cli_debug_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm huntgroup debug";
+		e->usage =   "Usage: vgsm huntgroup debug [huntgroup]\n"
+			     "\n"
+			     "Debug huntgroup events\n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_hg_cli_debug_complete(a->line, a->word, a->pos, a->n);
+	}
+#endif	
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)	
+	return vgsm_hg_cli_debug_do(fd, argc, argv, 3, TRUE);
+#else	
+	return vgsm_hg_cli_debug_do(a->fd,a->argc,a->argv, 3, TRUE);
+#endif
+}
+
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int vgsm_hg_cli_no_debug_func(int fd, int argc, char *argv[])
+#else
+static char *vgsm_hg_cli_no_debug_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "vgsm huntgroup no debug";
+		e->usage =   "Usage: vgsm huntgroup no debug \n";
+		return NULL;
+	case CLI_GENERATE:
+		return vgsm_hg_cli_no_debug_complete(a->line, a->word, a->pos, a->n);
+	}
+	
+#endif	
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	return vgsm_hg_cli_debug_do(fd, argc, argv, 4, FALSE);
+#else
+	return vgsm_hg_cli_debug_do(a->fd, a->argc, a->argv, 4, FALSE);
+#endif
+
+}
+
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_hg_cli_debug_help[] =
 "Usage: vgsm huntgroup debug [huntgroup]\n"
 "\n"
@@ -612,14 +714,38 @@ static struct ast_cli_entry vgsm_hg_cli_no_debug =
 	vgsm_hg_cli_no_debug_complete
 };
 #endif
+#endif
+
+/*! \brief SIP Cli commands definition */
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+
+#else
+static struct ast_cli_entry cli_ks[] = {
+	AST_CLI_DEFINE(vgsm_hg_show_func, "vgsm huntgroup show"),	
+};
+static struct ast_cli_entry cli_ksdb[] = {
+	AST_CLI_DEFINE(vgsm_hg_cli_debug_func, "vgsm huntgroup debug"),
+	AST_CLI_DEFINE(vgsm_hg_cli_no_debug_func, "vgsm huntgroup no debug"),	
+};
+#endif
+
+
 
 int vgsm_hg_load(void)
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_register(&vgsm_hg_show);
+#else
+	ast_cli_register_multiple(cli_ks, ARRAY_LEN(cli_ks));
+#endif
 
 #ifdef DEBUG_CODE
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_register(&vgsm_hg_cli_debug);
 	ast_cli_register(&vgsm_hg_cli_no_debug);
+#else
+	ast_cli_register_multiple(cli_ksdb, ARRAY_LEN(cli_ksdb));
+#endif
 #endif
 
 	return 0;
@@ -628,11 +754,17 @@ int vgsm_hg_load(void)
 int vgsm_hg_unload(void)
 {
 #ifdef DEBUG_CODE
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_unregister(&vgsm_hg_cli_no_debug);
 	ast_cli_unregister(&vgsm_hg_cli_debug);
+#else
+	ast_cli_unregister_multiple(cli_ksdb, ARRAY_LEN(cli_ksdb));
 #endif
-
+#endif
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_unregister(&vgsm_hg_show);
-
+#else
+	ast_cli_unregister_multiple(cli_ks, ARRAY_LEN(cli_ks));
+#endif
 	return 0;
 }

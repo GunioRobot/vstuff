@@ -19,6 +19,11 @@
 #include <errno.h>
 #include <locale.h>
 #include <iconv.h>
+#include <asterisk/version.h>
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+#else
+#include <asterisk.h>
+#endif
 
 #include <asterisk/lock.h>
 #include <asterisk/logger.h>
@@ -509,11 +514,22 @@ int vgsm_sms_status_report_spool(struct vgsm_sms_status_report *sms)
 	}
 	ast_mutex_unlock(&me->lock);
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	struct tm tm;
 	time_t tim = time(NULL);
 	ast_localtime(&tim, &tm, NULL);
+#else
+	struct ast_tm tm;
+	struct timeval tim = ast_tvnow();
+	ast_localtime(&tim, &tm, NULL);
+#endif
+	
 	char tmpstr[40];
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
+#else
+	ast_strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
+#endif
 	fprintf(f,"; %s \n", tmpstr);
 
 	fprintf(f, "From: <%s%s@%s>\n",
@@ -530,15 +546,27 @@ int vgsm_sms_status_report_spool(struct vgsm_sms_status_report *sms)
 	else
 		fprintf(f, "To: <%s>\n", mc->sms_recipient_address);
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_localtime(&sms->smcc_timestamp, &tm, NULL);
 	strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
+#else
+	struct timeval tv = { sms->smcc_timestamp, };
+	ast_localtime(&tv, &tm, NULL);
+	ast_strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
+#endif
+	
 	fprintf(f, "Date: %s\n", tmpstr);
 
 	fprintf(f, "X-SMS-Message-Type: SMS-STATUS-REPORT\n");
 	fprintf(f, "X-SMS-Message-Reference: %d\n", sms->message_reference);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_localtime(&sms->discharge_time, &tm, NULL);
 	strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
+#else
+	struct timeval tvdt= { sms->discharge_time, };
+	ast_localtime(&tvdt, &tm, NULL);
+	ast_strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
+#endif
 	fprintf(f, "X-SMS-Discharge-Time: %s\n", tmpstr);
 
 	fprintf(f, "X-SMS-Recipient-NP: %s\n",

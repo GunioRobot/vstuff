@@ -18,6 +18,12 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+#include <asterisk/version.h>
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+#else
+#include <asterisk.h>
+#endif 
+
 #include <asterisk/lock.h>
 #include <asterisk/channel.h>
 #include <asterisk/config.h>
@@ -27,7 +33,7 @@
 #include <asterisk/options.h>
 #include <asterisk/cli.h>
 #include <asterisk/causes.h>
-#include <asterisk/version.h>
+
 
 #include "chan_visdn.h"
 #include "overlap.h"
@@ -231,11 +237,12 @@ static int new_digit(
 
 static int visdn_exec_overlap_dial(struct ast_channel *chan, void *data)
 {
+	
 	int retval = -1;
 	int do_exit = FALSE;
 
 	char called_number[32] = "";
-
+	ast_log(LOG_WARNING, "Ciao Mino sono dentro  \n");
 	while(ast_waitfor(chan, -1) > -1 && !do_exit) {
 		struct ast_frame *f;
 		f = ast_read(chan);
@@ -249,8 +256,7 @@ static int visdn_exec_overlap_dial(struct ast_channel *chan, void *data)
 
 		ast_frfree(f);
 	}
-
-	return retval;
+	return retval; 
 }
 
 static char *visdn_overlap_dial_descr =
@@ -258,11 +264,15 @@ static char *visdn_overlap_dial_descr =
 
 void visdn_overlap_register(void)
 {
-	ast_register_application(
+	ast_log(LOG_WARNING, "Mino sei qui .....\n");
+
+	 ast_register_application(
 		"VISDNOverlapDial",
 		visdn_exec_overlap_dial,
 		"Plays dialtone and waits for digits",
 		visdn_overlap_dial_descr);
+
+	
 }
 
 void visdn_overlap_unregister(void)

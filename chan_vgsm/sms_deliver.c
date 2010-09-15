@@ -20,6 +20,11 @@
 #include <locale.h>
 #include <iconv.h>
 
+#include <asterisk/version.h>
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+#else
+#include <asterisk.h>
+#endif
 #include <asterisk/lock.h>
 #include <asterisk/logger.h>
 #include <asterisk/cli.h>
@@ -451,12 +456,21 @@ int vgsm_sms_deliver_spool(struct vgsm_sms_deliver *sms)
 		}
 	}
 	ast_mutex_unlock(&me->lock);
-
+	
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	struct tm tm;
 	time_t tim = time(NULL);
+#else
+	struct ast_tm tm;
+	struct timeval tim = ast_tvnow();
+#endif
 	ast_localtime(&tim, &tm, NULL);
 	char tmpstr[40];
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
+#else
+	ast_strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
+#endif
 	fprintf(f,"; %s\n", tmpstr);
 
 	fprintf(f, "From: <%s%s@%s>\n",
@@ -472,9 +486,15 @@ int vgsm_sms_deliver_spool(struct vgsm_sms_deliver *sms)
 		fprintf(f, "To: %s\n", mc->sms_recipient_address);
 	else
 		fprintf(f, "To: <%s>\n", mc->sms_recipient_address);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_localtime(&sms->timestamp, &tm, NULL);
 	strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
+#else
+	struct timeval tv = { sms->timestamp, };
+	ast_localtime(&tv, &tm, NULL);
+	ast_strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
+#endif
+	
 	fprintf(f, "Date: %s\n", tmpstr);
 
 	fprintf(f, "X-SMS-Message-Type: SMS-DELIVER\n");
@@ -656,12 +676,21 @@ int vgsm_sms_deliver_manager(struct vgsm_sms_deliver *sms)
 		}
 	}
 	ast_mutex_unlock(&me->lock);
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	struct tm tm;
 	time_t tim = time(NULL);
+#else
+	struct ast_tm tm;
+	struct timeval tim = ast_tvnow();
+#endif
 	ast_localtime(&tim, &tm, NULL);
 	char tmpstr[40];
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)	
 	strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
+#else
+	ast_strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);	
+#endif
+
 	sanprintf(text, sizeof(text),"; %s\r\n", tmpstr);
 
 	sanprintf(text, sizeof(text), 
@@ -677,9 +706,14 @@ int vgsm_sms_deliver_manager(struct vgsm_sms_deliver *sms)
 		"Content-Type: text/plain; charset=\"UTF-8\"\r\n");
 	sanprintf(text, sizeof(text), 
 		"Content-Transfer-Encoding: base64\r\n");
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_localtime(&sms->timestamp, &tm, NULL);
 	strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
+#else
+	struct timeval tv = { sms->timestamp, };
+	ast_localtime(&tv, &tm, NULL);
+	ast_strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
+#endif
 	sanprintf(text, sizeof(text), 
 		"Date: %s\r\n", tmpstr);
 

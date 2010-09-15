@@ -17,7 +17,7 @@
 
 #include <linux/types.h>
 
-#include <asterisk/logger.h>
+// #include <asterisk/logger.h>
 
 extern struct vgsm_state vgsm;
 

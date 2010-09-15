@@ -15,6 +15,11 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include <asterisk/version.h>
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+#else
+#include <asterisk.h>
+#endif
 #include <asterisk/config.h>
 #include <asterisk/lock.h>
 
@@ -73,7 +78,13 @@ static void vgsm_operators_countries_init(void)
 {
 	struct ast_config *cfg;
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	cfg = ast_config_load(VGSM_OP_COUNTRY_CONFIG_FILE);
+#else
+	struct ast_flags config_flags = { CONFIG_FLAG_WITHCOMMENTS};
+	cfg = ast_config_load(VGSM_OP_COUNTRY_CONFIG_FILE,config_flags);
+#endif
+
 	if (!cfg) {
 		ast_log(LOG_WARNING,
 			"Unable to load config %s: %s\n",
@@ -128,7 +139,12 @@ static void vgsm_operators_info_init(void)
 {
 	struct ast_config *cfg;
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	cfg = ast_config_load(VGSM_OP_CONFIG_FILE);
+#else
+	struct ast_flags config_flags = { CONFIG_FLAG_WITHCOMMENTS};
+	cfg = ast_config_load(VGSM_OP_CONFIG_FILE,config_flags);
+#endif
 	if (!cfg) {
 		ast_log(LOG_WARNING,
 			"Unable to load config %s: %s\n",

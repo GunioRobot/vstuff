@@ -22,6 +22,12 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include <asterisk/version.h>
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600) 
+#else
+#include <asterisk.h>
+#endif 
+
 #include <asterisk/lock.h>
 #include <asterisk/file.h>
 #include <asterisk/logger.h>
@@ -30,7 +36,7 @@
 #include <asterisk/module.h>
 #include <asterisk/options.h>
 #include <asterisk/logger.h>
-#include <asterisk/version.h>
+
 
 /* FUCK YOU ASTERSISK */
 #undef pthread_mutex_t
@@ -52,6 +58,11 @@
 #include "chan_visdn.h"
 
 #define VISDN_PPP_APP_NAME "vISDNppp"
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+#else
+#define lock lock_dont_use
+#endif
 
 static char *descrip = 
 "vISDNppp(args): Spawns pppd and connects the channel to a newly created\n"

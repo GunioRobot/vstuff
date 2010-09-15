@@ -18,6 +18,12 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+#include <asterisk/version.h>
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+#else 
+#include <asterisk.h>
+#endif 
+
 #include <asterisk/lock.h>
 #include <asterisk/channel.h>
 #include <asterisk/config.h>
@@ -27,7 +33,7 @@
 #include <asterisk/options.h>
 #include <asterisk/cli.h>
 #include <asterisk/causes.h>
-#include <asterisk/version.h>
+
 
 #include "chan_visdn.h"
 #include "disconnect.h"

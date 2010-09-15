@@ -26,9 +26,17 @@
 
 #include <ifaddrs.h>
 #include <netinet/in.h>
-#include <linux/if.h>
+
 #include <linux/if_ether.h>
 #include <net/if_arp.h>
+
+#include <asterisk/version.h>
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+#include <linux/if.h>
+#else
+#include <net/if.h>
+#include <asterisk.h>
+#endif
 
 #include <asterisk/lock.h>
 #include <asterisk/channel.h>
@@ -38,7 +46,7 @@
 #include <asterisk/pbx.h>
 #include <asterisk/options.h>
 #include <asterisk/cli.h>
-#include <asterisk/version.h>
+
 
 #include <linux/lapd.h>
 #include <libq931/intf.h>
@@ -1204,9 +1212,28 @@ static void visdn_show_interface(int fd, struct visdn_intf *intf)
 
 	ast_mutex_unlock(&intf->lock);
 }
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int do_visdn_interface_show(int fd, int argc, char *argv[])
+#else
+static char *do_visdn_interface_show(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "visdn interface show";
+		e->usage =   "Usage: visdn interface show [<interface>]\n"
+			     "\n"
+			     "	Displays informations on vISDN's interfaces. If no interface name is\n"
+			     "	specified, shows a summary of all the interfaces.\n";
+		return NULL;
+	case CLI_GENERATE:
+		return complete_visdn_interface_show(a->line, a->word, a->pos, a->n);
+	}
+#endif
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc == 3) {
 		ast_cli(fd, "Interface  Status         Role Mode TEI Calls\n");
 		
@@ -1230,8 +1257,33 @@ static int do_visdn_interface_show(int fd, int argc, char *argv[])
 		return RESULT_SHOWUSAGE;
 
 	return RESULT_SUCCESS;
-}
+#else
+	if (a->argc == 3) {
+		ast_cli(a->fd, "Interface  Status         Role Mode TEI Calls\n");
+		
+		struct visdn_intf *intf;
+		ast_rwlock_rdlock(&visdn.intfs_list_lock);
+		list_for_each_entry(intf, &visdn.intfs_list, node)
+			visdn_show_interface(a->fd, intf);
+		ast_rwlock_unlock(&visdn.intfs_list_lock);
 
+	} else if (a->argc == 4) {
+		struct visdn_intf *intf;
+		ast_rwlock_rdlock(&visdn.intfs_list_lock);
+		list_for_each_entry(intf, &visdn.intfs_list, node) {
+			if (!strcasecmp(a->argv[3], intf->name)) {
+				visdn_print_intf_details(a->fd, intf);
+				break;
+			}
+		}
+		ast_rwlock_unlock(&visdn.intfs_list_lock);
+	} else
+		return CLI_SHOWUSAGE;
+
+	return CLI_SUCCESS;
+#endif
+}
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char visdn_interface_show_help[] =
 "Usage: visdn interface show [<interface>]\n"
 "\n"
@@ -1241,12 +1293,12 @@ static char visdn_interface_show_help[] =
 static struct ast_cli_entry visdn_interface_show =
 {
 	{ "visdn", "interface", "show", NULL },
-	do_visdn_interface_show,
+	do_visdn_interface_show, 
 	"Displays vISDN's interface information",
 	visdn_interface_show_help,
 	complete_visdn_interface_show,
 };
-
+#endif
 /*---------------------------------------------------------------------------*/
 
 #ifdef DEBUG_CODE
@@ -1314,15 +1366,22 @@ static int visdn_intf_cli_debug_all(int fd, BOOL enable)
 
 	return RESULT_SUCCESS;
 }
-
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static int visdn_intf_cli_debug(int fd, int argc, char *argv[],
 				int args, BOOL enable)
+#else
+static char *visdn_intf_cli_debug(int fd, int argc, char *argv[],
+				int args, BOOL enable)
+#endif
 {
 	int err = 0;
 
 	if (argc < args)
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		return RESULT_SHOWUSAGE;
-
+#else
+		return CLI_SHOWUSAGE;
+#endif
 	struct visdn_intf *intf = NULL;
 
 	if (argc < args + 1) {
@@ -1333,7 +1392,11 @@ static int visdn_intf_cli_debug(int fd, int argc, char *argv[],
 			if (!intf) {
 				ast_cli(fd, "Cannot find interface '%s'\n",
 					argv[args]);
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 				return RESULT_FAILURE;
+#else
+				return CLI_SHOWUSAGE;
+#endif
 			}
 		}
 
@@ -1347,6 +1410,7 @@ static int visdn_intf_cli_debug(int fd, int argc, char *argv[],
 			ast_cli(fd, "Unrecognized category '%s'\n",
 					argv[args]);
 			err = RESULT_SHOWUSAGE;
+
 		}
 
 		if (intf)
@@ -1354,21 +1418,17 @@ static int visdn_intf_cli_debug(int fd, int argc, char *argv[],
 	}
 
 	if (err)
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		return err;
-
+#else
+		return CLI_SHOWUSAGE;
+#endif
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
+#else
+	return CLI_SUCCESS;
+#endif
 }
-
-static int visdn_intf_debug_func(int fd, int argc, char *argv[])
-{
-	return visdn_intf_cli_debug(fd, argc, argv, 3, TRUE);
-}
-
-static int visdn_intf_no_debug_func(int fd, int argc, char *argv[])
-{
-	return visdn_intf_cli_debug(fd, argc, argv, 4, FALSE);
-}
-
 static char *visdn_intf_debug_category_complete(
 #if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
 	char *line, char *word,
@@ -1426,6 +1486,67 @@ static char *visdn_intf_no_debug_complete(
 	return NULL;
 }
 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int visdn_intf_debug_func(int fd, int argc, char *argv[])
+#else
+static char *visdn_intf_debug_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "visdn interface debug";
+		e->usage =   "Usage: visdn interface debug [<state | jitbuf | frames> [interface]]\n"
+			     "\n"
+			     "	Debug vISDN's interface related events\n"
+			     "\n"
+			     "	state		Interface state transitions\n"
+			     "	jitbuf		Audio jitter buffer\n"
+			     "	frames		Audio frames\n";
+		return NULL;
+	case CLI_GENERATE:
+		return visdn_intf_debug_complete(a->line, a->word, a->pos, a->n);
+	}
+#endif
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	return visdn_intf_cli_debug(fd, argc, argv, 3, TRUE);
+#else
+	return visdn_intf_cli_debug(a->fd, a->argc,a->argv, 3, TRUE);
+#endif
+}
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+static int visdn_intf_no_debug_func(int fd, int argc, char *argv[])
+#else
+static char *visdn_intf_no_debug_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+#endif
+{
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+
+#else
+	switch (cmd) {
+	case CLI_INIT:
+		e->command = "visdn interface no debug";
+		e->usage =   "Usage: Disable interface debugging\n";
+		return NULL;
+	case CLI_GENERATE:
+		return visdn_intf_no_debug_complete(a->line, a->word, a->pos, a->n);
+	}
+#endif
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
+	return visdn_intf_cli_debug(fd, argc, argv, 4, FALSE);
+#else
+	return visdn_intf_cli_debug(a->fd, a->argc, a->argv, 4, FALSE);
+#endif
+
+}
+
+
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 static char visdn_intf_debug_help[] =
 "Usage: visdn interface [<state | jitbuf | frames> [interface]]\n"
 "\n"
@@ -1452,26 +1573,60 @@ static struct ast_cli_entry visdn_intf_no_debug =
 	NULL,
 	visdn_intf_no_debug_complete
 };
+#else
+static struct ast_cli_entry cli_ksdeb[] = {
+	AST_CLI_DEFINE(visdn_intf_debug_func, "Enable interface debugging"),
+	AST_CLI_DEFINE(visdn_intf_no_debug_func, "Disable interface debugging")
+	
+};
+static struct ast_cli_entry cli_ksnodeb[] = {
+	AST_CLI_DEFINE(do_visdn_interface_show, "visdn interface show")
+	
+};
 #endif
 
+#endif
 /*---------------------------------------------------------------------------*/
+
+/*! \brief SIP Cli commands definition */
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+
+#else
+
+#endif
 
 void visdn_intf_cli_register(void)
 {
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_register(&visdn_interface_show);
+#else
+	ast_cli_register_multiple(cli_ksnodeb, ARRAY_LEN(cli_ksnodeb));
+#endif
 
 #ifdef DEBUG_CODE
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_register(&visdn_intf_debug);
 	ast_cli_register(&visdn_intf_no_debug);
+#else
+	ast_cli_register_multiple(cli_ksdeb, ARRAY_LEN(cli_ksdeb));
+#endif
 #endif
 }
 
 void visdn_intf_cli_unregister(void)
 {
 #ifdef DEBUG_CODE
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	ast_cli_unregister(&visdn_intf_no_debug);
 	ast_cli_unregister(&visdn_intf_debug);
+#else
+	ast_cli_unregister_multiple(cli_ksdeb, ARRAY_LEN(cli_ksdeb));
+#endif
+#endif
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
+	ast_cli_unregister(&visdn_interface_show);
+#else
+	ast_cli_unregister_multiple(cli_ksnodeb, ARRAY_LEN(cli_ksnodeb));
 #endif
 
-	ast_cli_unregister(&visdn_interface_show);
 }
