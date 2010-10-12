@@ -15,6 +15,11 @@
 
 #ifdef __KERNEL__
 
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)
+#else
+#include <linux/slab.h>
+#endif
 #include <asm/atomic.h>
 
 struct ks_streamframe
