@@ -720,8 +720,11 @@ unsigned int lapd_poll(struct file *file,
 {
 	unsigned int mask;
 	struct sock *sk = sock->sk;
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)
 	poll_wait(file, sk->sk_sleep, wait);
+#else
+	poll_wait(file, sk_sleep(sk), wait);
+#endif
 
 	if (sk->sk_state == LAPD_SK_STATE_LISTEN) {
 		struct lapd_sock *lapd_sock = to_lapd_sock(sk);
@@ -807,9 +810,13 @@ err_invalid_socket_type:
 	return err;
 }
 
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 int lapd_setsockopt(struct socket *sock, int level, int optname,
 	char __user *optval_u, int optlen)
+#else
+int lapd_setsockopt(struct socket *sock, int level, int optname,
+	char __user *optval_u, unsigned int optlen)
+#endif
 {
 	struct sock *sk = sock->sk;
 	struct lapd_sock *lapd_sock = to_lapd_sock(sk);
@@ -1301,7 +1308,10 @@ struct lapd_sock *lapd_new_sock(
 	new_sk->sk_rcvbuf = parent_sk->sk_rcvbuf;
 	new_sk->sk_sndbuf = parent_sk->sk_sndbuf;
 	new_sk->sk_state = LAPD_SK_STATE_NORMAL_DLC;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)
 	new_sk->sk_sleep = parent_sk->sk_sleep;
+#else
+#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,12)
 	new_sk->sk_zapped = parent_sk->sk_zapped;
@@ -1398,9 +1408,13 @@ int lapd_multiframe_wait_for_establishment(
 		return -EWOULDBLOCK;
 
 	for (;;) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)
 		prepare_to_wait_exclusive(lapd_sock->sk.sk_sleep, &wait,
 			TASK_INTERRUPTIBLE);
-
+#else
+		prepare_to_wait_exclusive(sk_sleep(&lapd_sock->sk), &wait,
+			TASK_INTERRUPTIBLE);
+#endif
 		lapd_release_sock(lapd_sock);
 		/* Timeout is used only to detect abnormal cases */
 		timeout = schedule_timeout(timeout);
@@ -1434,9 +1448,11 @@ int lapd_multiframe_wait_for_establishment(
 			break;
 		}
 	}
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)
 	finish_wait(lapd_sock->sk.sk_sleep, &wait);
-
+#else
+	finish_wait(sk_sleep(&lapd_sock->sk), &wait);
+#endif
 	return err;
 }
 
@@ -1615,10 +1631,14 @@ static int lapd_wait_for_new_dlc(struct lapd_sock *lapd_sock)
 	int timeout = 10 * HZ;
 
 	for (;;) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)
 		prepare_to_wait_exclusive(lapd_sock->sk.sk_sleep, &wait,
 					  TASK_INTERRUPTIBLE);
+#else
+		prepare_to_wait_exclusive(sk_sleep(&lapd_sock->sk), &wait,
+					  TASK_INTERRUPTIBLE);
+#endif
 		lapd_release_sock(lapd_sock);
-
 		timeout = schedule_timeout(timeout);
 
 		lapd_lock_sock(lapd_sock);
@@ -1636,8 +1656,11 @@ static int lapd_wait_for_new_dlc(struct lapd_sock *lapd_sock)
 			break;
 		}
 	}
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)
 	finish_wait(lapd_sock->sk.sk_sleep, &wait);
-
+#else
+	finish_wait(sk_sleep(&lapd_sock->sk), &wait);
+#endif
 	return err;
 }
 
@@ -1749,10 +1772,13 @@ int lapd_multiframe_wait_for_release(
 
 		if (nonblock)
 			return -EWOULDBLOCK;
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)
 		prepare_to_wait_exclusive(lapd_sock->sk.sk_sleep, &wait,
 			TASK_INTERRUPTIBLE);
-
+#else
+		prepare_to_wait_exclusive(sk_sleep(&lapd_sock->sk), &wait,
+			TASK_INTERRUPTIBLE);
+#endif		
 		lapd_release_sock(lapd_sock);
 		/* Timeout is used only to detect abnormal cases */
 		timeout = schedule_timeout(timeout);
@@ -1781,8 +1807,11 @@ int lapd_multiframe_wait_for_release(
 		}
 	}
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)
 	finish_wait(lapd_sock->sk.sk_sleep, &wait);
-
+#else
+	finish_wait(sk_sleep(&lapd_sock->sk), &wait);
+#endif
 	return err;
 }
 
@@ -1867,8 +1896,10 @@ static struct proto_ops lapd_dgram_ops = {
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
 static int lapd_create(struct socket *sock, int protocol)
-#else
+#elif LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,32)
 static int lapd_create(struct net *net, struct socket *sock, int protocol)
+#else
+static int lapd_create(struct net *net, struct socket *sock, int protocol,int kern)
 #endif
 {
 	struct sock *sk;
