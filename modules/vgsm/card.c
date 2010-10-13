@@ -9,8 +9,11 @@
  * under the terms and conditions of the GNU General Public License.
  *
  */
-
+#include <linux/version.h>
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,33)
 #include <linux/autoconf.h>
+#else
+#endif
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/pci.h>

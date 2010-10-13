@@ -10,8 +10,11 @@
  *
  */
 
+#include <linux/version.h>
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,33)
 #include <linux/autoconf.h>
-#include <linux/kernel.h>
+#else
+#endif
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/wait.h>

@@ -14,7 +14,12 @@
 #define SOCK_DEBUGGING
 #endif
 
+
+#include <linux/version.h>
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,33)
 #include <linux/autoconf.h>
+#else
+#endif
 #include <linux/module.h>
 #include <linux/termios.h>
 #include <linux/tcp.h>
@@ -23,7 +28,6 @@
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 #include <linux/if.h>
-#include <linux/version.h>
 #include <net/datalink.h>
 #include <net/sock.h>
 
