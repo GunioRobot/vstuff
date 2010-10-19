@@ -17,6 +17,7 @@
 #include <linux/kobject.h>
 #include <linux/cdev.h>
 #include <linux/kdev_t.h>
+#include <linux/version.h>
 
 #include <kernel_config.h>
 
@@ -24,7 +25,7 @@
 #include "kstreamer_priv.h"
 #include "duplex.h"
 
-struct kset ks_duplexes_kset;
+struct kset *ks_duplexes_kset;
 
 static struct attribute *ks_duplex_default_attrs[] =
 {
@@ -122,7 +123,7 @@ struct ks_duplex *ks_duplex_create(
 #endif
 
 	duplex->kobj.parent = parent;
-	duplex->kobj.kset = kset_get(&ks_duplexes_kset);
+	duplex->kobj.kset = kset_get(ks_duplexes_kset);
 	kobject_set_name(&duplex->kobj, "%s", name);
 
 	duplex->ops = ops;
@@ -156,8 +157,6 @@ int ks_duplex_register(struct ks_duplex *duplex)
 	if (err < 0)
 		goto err_kobject_add;
 #endif
-
-	kobject_set_name(&ks_duplexes_kset.kobj, "duplexes");
 
 	return 0;
 
@@ -213,20 +212,15 @@ int ks_duplex_modinit(void)
 {
 	int err;
 
-	ks_duplexes_kset.kobj.parent = &kstreamer_kset.kobj;
-
-	err = kobject_set_name(&ks_duplexes_kset.kobj, "duplexes");
-	if (err < 0)
-	        goto err_kobject_set_name;
-
-	err = kset_register(&ks_duplexes_kset);
-	if (err < 0)
-		goto err_kset_register;
+	ks_duplexes_kset = kset_create_and_add("duplexes", NULL, &kstreamer_kobj);
+	if (!ks_duplexes_kset) {
+	   err = -ENOMEM;
+	   goto err_kset_register;
+	}
 
 	return 0;
 
-err_kobject_set_name:
-	kset_unregister(&ks_duplexes_kset);
+	kset_unregister(ks_duplexes_kset);
 err_kset_register:
 
 	return err;
@@ -234,5 +228,5 @@ err_kset_register:
 
 void ks_duplex_modexit(void)
 {
-	kset_unregister(&ks_duplexes_kset);
+	kset_unregister(ks_duplexes_kset);
 }
