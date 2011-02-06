@@ -18,11 +18,21 @@
 #include "st_port.h"
 #include "st_port_inline.h"
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
-#define dev_name(&((chan)->port->card->pci_dev->dev)) 	(chan)->port->card->pci_dev->dev.bus_id
-#endif
-
 	#ifdef DEBUG_CODE
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+	#define hfc_debug_st_chan(chan, dbglevel, format, arg...)		\
+		if (debug_level >= dbglevel)					\
+			printk(KERN_DEBUG hfc_DRIVER_PREFIX			\
+				"%s-%s:"					\
+				"st%d:"						\
+				"chan[%s] "					\
+				format,						\
+				(chan)->port->card->pci_dev->dev.bus->name,	\
+				(chan)->port->card->pci_dev->dev.bus_id,        \
+				(chan)->port->id,				\
+				kobject_name(&(chan)->ks_node.kobj),		\
+				## arg)
+#else
 	#define hfc_debug_st_chan(chan, dbglevel, format, arg...)		\
 		if (debug_level >= dbglevel)					\
 			printk(KERN_DEBUG hfc_DRIVER_PREFIX			\
@@ -35,10 +45,23 @@
 				(chan)->port->id,				\
 				kobject_name(&(chan)->ks_node.kobj),		\
 				## arg)
+#endif
 	#else
 	#define hfc_debug_st_chan(chan, dbglevel, format, arg...) do {} while (0)
 	#endif
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+	#define hfc_msg_st_chan(chan, level, format, arg...)			\
+		printk(level hfc_DRIVER_PREFIX					\
+			"%s-%s:"						\
+			"st%d:"							\
+			"chan[%s] "						\
+			format,							\
+			(chan)->port->card->pci_dev->dev.bus->name,		\
+			(chan)->port->card->pci_dev->dev.bus_id,		\
+			(chan)->port->id,					\
+			(chan)->ks_node.kobj.name,				\
+			## arg)
+#else
 	#define hfc_msg_st_chan(chan, level, format, arg...)			\
 		printk(level hfc_DRIVER_PREFIX					\
 			"%s-%s:"						\
@@ -50,7 +73,7 @@
 			(chan)->port->id,					\
 			(chan)->ks_node.kobj.name,				\
 			## arg)
-
+#endif
 //----------------------------------------------------------------------------
 
 #if 0

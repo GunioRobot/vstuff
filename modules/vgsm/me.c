@@ -36,10 +36,19 @@
 #include "regs.h"
 #include "me.h"
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
-#define dev_name(&((me)->card->pci_dev->dev)) (me)->card->pci_dev->dev.bus_id
-#endif
 #ifdef DEBUG_CODE
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+#define vgsm_debug_me(me, dbglevel, format, arg...)			\
+	if (debug_level >= dbglevel)					\
+		printk(KERN_DEBUG vgsm_DRIVER_PREFIX			\
+			"%s-%s:"					\
+			"me[%s] "					\
+			format,						\
+			(me)->card->pci_dev->dev.bus->name,		\
+			(me)->card->pci_dev->dev.bus_id,		\
+			kobject_name(&(me)->ks_node.kobj),		\
+			## arg)
+#else
 #define vgsm_debug_me(me, dbglevel, format, arg...)			\
 	if (debug_level >= dbglevel)					\
 		printk(KERN_DEBUG vgsm_DRIVER_PREFIX			\
@@ -50,7 +59,7 @@
 			dev_name(&((me)->card->pci_dev->dev)),		\
 			kobject_name(&(me)->ks_node.kobj),		\
 			## arg)
-
+#endif
 #else
 #define vgsm_debug_me(me, dbglevel, format, arg...) do {} while (0)
 #endif

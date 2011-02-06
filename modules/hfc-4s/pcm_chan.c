@@ -17,11 +17,20 @@
 #include "pcm_port.h"
 #include "pcm_chan.h"
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
-#define dev_name(&((chan)->port->card->pci_dev->dev)) (chan)->port->card->pci_dev->dev.bus_id
-#endif
-
 	#ifdef DEBUG_CODE
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+	#define hfc_debug_pcm_chan(chan, dbglevel, format, arg...)		\
+		if (debug_level >= dbglevel)					\
+			printk(KERN_DEBUG hfc_DRIVER_PREFIX			\
+				"%s-%s:"					\
+				"pcm:"						\
+				"chan[%s] "					\
+				format,						\
+				(chan)->port->card->pci_dev->dev.bus->name,	\
+				(chan)->port->card->pci_dev->dev.bus_id,	\
+				kobject_name(&(chan)->ks_node.kobj),		\
+				## arg)
+#else
 	#define hfc_debug_pcm_chan(chan, dbglevel, format, arg...)		\
 		if (debug_level >= dbglevel)					\
 			printk(KERN_DEBUG hfc_DRIVER_PREFIX			\
@@ -33,12 +42,23 @@
 				dev_name(&((chan)->port->card->pci_dev->dev)), \
 				kobject_name(&(chan)->ks_node.kobj),		\
 				## arg)
-
+#endif
 	#else
 	#define hfc_debug_pcm_chan(chan, dbglevel, format, arg...) do {} while (0)
 	#define hfc_debug_schan(schan, dbglevel, format, arg...) do {} while (0)
 	#endif
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+	#define hfc_msg_pcm_chan(chan, level, format, arg...)			\
+		printk(level hfc_DRIVER_PREFIX					\
+			"%s-%s:"						\
+			"pcm:"							\
+			"chan[%s] "						\
+			format,							\
+			(chan)->port->card->pci_dev->dev.bus->name,		\
+			(chan)->port->card->pci_dev->dev.bus_id,		\
+			kobject_name(&(chan)->visdn_chan.kobj),			\
+			## arg)
+#else
 	#define hfc_msg_pcm_chan(chan, level, format, arg...)			\
 		printk(level hfc_DRIVER_PREFIX					\
 			"%s-%s:"						\
@@ -49,7 +69,7 @@
 			dev_name(&((chan)->port->card->pci_dev->dev)),		\
 			kobject_name(&(chan)->visdn_chan.kobj),			\
 			## arg)
-
+#endif
 static void hfc_pcm_chan_rx_chan_release(struct ks_chan *ks_chan)
 {
 	struct hfc_pcm_chan_rx *chan_rx =

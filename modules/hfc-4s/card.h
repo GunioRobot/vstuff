@@ -28,24 +28,42 @@
 #include "regs.h"
 
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
-#define dev_name(&((card)->pci_dev->dev)) (card)->pci_dev->dev.bus_id
-#endif 
-
 #ifdef DEBUG_CODE
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
 #define hfc_debug_card(card, dbglevel, format, arg...)	\
 	if (debug_level >= dbglevel)			\
 		printk(KERN_DEBUG hfc_DRIVER_PREFIX	\
 			"%s-%s "			\
 			format,				\
 			(card)->pci_dev->dev.bus->name,	\
-			dev_name(&((card)->pci_dev->dev)), \
+		        (card)->pci_dev->dev.bus_id,    \
 			## arg)
+#else
+#define hfc_debug_card(card, dbglevel, format, arg...)	\
+	if (debug_level >= dbglevel)			\
+		printk(KERN_DEBUG hfc_DRIVER_PREFIX	\
+			"%s-%s "			\
+			format,				\
+			(card)->pci_dev->dev.bus->name,	\
+			dev_name(&((card)->pci_dev->dev)), 	\
+			## arg)
+#endif
 #else
 #define hfc_debug_card(card, dbglevel, format, arg...)	\
 	do { card = card; } while (0)
 #endif
 
+
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+#define hfc_msg_card(card, level, format, arg...)	\
+	printk(level hfc_DRIVER_PREFIX			\
+		"%s-%s "				\
+		format,					\
+		(card)->pci_dev->dev.bus->name,		\
+		(card)->pci_dev->dev.bus_id,    \
+		## arg)
+#else
 #define hfc_msg_card(card, level, format, arg...)	\
 	printk(level hfc_DRIVER_PREFIX			\
 		"%s-%s "				\
@@ -53,7 +71,7 @@
 		(card)->pci_dev->dev.bus->name,		\
 		dev_name(&((card)->pci_dev->dev)), 	\
 		## arg)
-
+#endif
 struct hfc_card_config
 {
 	u8 double_clock;

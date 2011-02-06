@@ -105,11 +105,17 @@ static struct hfc_fifo_config hfc_fifo_config[] = {
 		{ 0x0000, 0xffff } },
 };
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
-#define dev_name(&((port)->card->pci_dev->dev)) (port)->card->pci_dev->dev.bus_id
-#endif
-
 #ifdef DEBUG_CODE
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+#define hfc_debug_sys_port(port, dbglevel, format, arg...)	\
+	if (debug_level >= dbglevel)				\
+		printk(KERN_DEBUG hfc_DRIVER_PREFIX		\
+			"%s-%s:"				\
+			"sys:"					\
+			format,					\
+			(port)->card->pci_dev->dev.bus->name,	\
+			(port)->card->pci_dev->dev.bus_id, ## arg)
+#else
 #define hfc_debug_sys_port(port, dbglevel, format, arg...)	\
 	if (debug_level >= dbglevel)				\
 		printk(KERN_DEBUG hfc_DRIVER_PREFIX		\
@@ -118,10 +124,21 @@ static struct hfc_fifo_config hfc_fifo_config[] = {
 			format,					\
 			(port)->card->pci_dev->dev.bus->name,	\
 			dev_name(&((port)->card->pci_dev->dev)), ## arg)
+#endif
 #else
 #define hfc_debug_sys_port(port, dbglevel, format, arg...) do {} while (0)
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+#define hfc_msg_sys_port(port, level, format, arg...)	\
+	printk(level hfc_DRIVER_PREFIX			\
+		"%s-%s:"				\
+		"sys:"					\
+		format,					\
+		(port)->card->pci_dev->dev.bus->name,	\
+		(port)->card->pci_dev->dev.bus_id,      \
+		## arg)
+#else
 #define hfc_msg_sys_port(port, level, format, arg...)	\
 	printk(level hfc_DRIVER_PREFIX			\
 		"%s-%s:"				\
@@ -130,8 +147,7 @@ static struct hfc_fifo_config hfc_fifo_config[] = {
 		(port)->card->pci_dev->dev.bus->name,	\
 		dev_name(&((port)->card->pci_dev->dev)),\
 		## arg)
-
-
+#endif
 /*---------------------------------------------------------------------------*/
 
 static int sanprintf(char *buf, int bufsize, const char *fmt, ...)

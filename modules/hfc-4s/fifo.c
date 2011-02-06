@@ -17,10 +17,20 @@
 #include "fifo_inline.h"
 #include "card.h"
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
-#define dev_name(&((fifo)->card->pci_dev->dev)) (fifo)->card->pci_dev->dev.bus_id
-#endif
 #ifdef DEBUG_CODE
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+#define hfc_debug_fifo(fifo, dbglevel, format, arg...)			\
+	if (debug_level >= dbglevel)					\
+		printk(KERN_DEBUG hfc_DRIVER_PREFIX			\
+			"%s-%s:"					\
+			"fifo[%d,%s]:"					\
+			format,						\
+			(fifo)->card->pci_dev->dev.bus->name,\
+			(fifo)->card->pci_dev->dev.bus_id		\
+			(fifo)->hw_index,				\
+			(fifo)->direction == RX ? "RX" : "TX",		\
+			## arg)
+#else
 #define hfc_debug_fifo(fifo, dbglevel, format, arg...)			\
 	if (debug_level >= dbglevel)					\
 		printk(KERN_DEBUG hfc_DRIVER_PREFIX			\
@@ -32,10 +42,23 @@
 			(fifo)->hw_index,				\
 			(fifo)->direction == RX ? "RX" : "TX",		\
 			## arg)
+#endif
 #else
 #define hfc_debug_fifo(chan, dbglevel, format, arg...) do {} while (0)
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
+#define hfc_msg_fifo(fifo, level, format, arg...)		\
+	printk(level hfc_DRIVER_PREFIX				\
+		"%s-%s:"					\
+		"fifo[%d,%s]:"					\
+		format,						\
+		(fifo)->card->pci_dev->dev.bus->name,\
+		(fifo)->card->pci_dev->dev.bus_id,		\
+		(fifo)->hw_index,				\
+		(fifo)->direction == RX ? "RX" : "TX",		\
+		## arg)
+#else
 #define hfc_msg_fifo(fifo, level, format, arg...)		\
 	printk(level hfc_DRIVER_PREFIX				\
 		"%s-%s:"					\
@@ -46,7 +69,7 @@
 		(fifo)->hw_index,				\
 		(fifo)->direction == RX ? "RX" : "TX",		\
 		## arg)
-
+#endif
 void hfc_fifo_drop(struct hfc_fifo *fifo, int size)
 {
 	int available_bytes = hfc_fifo_used(fifo);
