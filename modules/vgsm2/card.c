@@ -890,6 +890,7 @@ int vgsm_card_probe(struct vgsm_card *card)
 	int err;
 	int i;
 	u32 r_info;
+        char car[15];
 
 	/* From here on vgsm_msg_card may be used */
 

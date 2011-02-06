@@ -67,7 +67,7 @@
 			"chan[%s] "						\
 			format,							\
 			(chan)->port->card->pci_dev->dev.bus->name,		\
-			dev_name(&((chan)->port->card->pci_dev->dev)),		\
+			(chan)->port->card->pci_dev->dev.bus_id,		\
 			kobject_name(&(chan)->ks_duplex.kobj),			\
 			## arg)
 #else
@@ -78,7 +78,7 @@
 			"chan[%s] "						\
 			format,							\
 			(chan)->port->card->pci_dev->dev.bus->name,		\
-			(chan)->port->card->pci_dev->dev.bus_id,		\
+			dev_name(&((chan)->port->card->pci_dev->dev)),		\
 			kobject_name(&(chan)->ks_duplex.kobj),			\
 			## arg)
 #endif
