@@ -649,7 +649,7 @@ void hfc_initialize_hw(struct hfc_card *card)
 		hfc_R_GPIO_EN1_V_GPIO_EN10 |
 		hfc_R_GPIO_EN1_V_GPIO_EN11);
 
-	card->gpio_out = 
+	card->gpio_out =
 		hfc_R_GPIO_OUT1_V_GPIO_OUT8 |
 		hfc_R_GPIO_OUT1_V_GPIO_OUT9 |
 		hfc_R_GPIO_OUT1_V_GPIO_OUT10 |

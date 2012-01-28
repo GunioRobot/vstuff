@@ -51,7 +51,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 %description
 
-Versatile-ISDN (vISDN for short) is an attempt at writing an ISDN 
+Versatile-ISDN (vISDN for short) is an attempt at writing an ISDN
 implementation for Linux.
 
 vISDN is officially certified from TiLAB (and conforms to TBR)
@@ -92,7 +92,7 @@ Developement files for software based on vISDN's libq931
 Summary: visdn kernel modules
 Release: %{release}_%{krelver}_%{kpackage}
 Group: Hardware/ISDN
-BuildRequires:  kernel-source 
+BuildRequires:  kernel-source
 Requires: visdn
 Requires: kernel-%{kpackage} = %{kversion}, /sbin/depmod
 Provides: kernel-modules
@@ -111,11 +111,11 @@ package %{kversion} (%{_target_cpu}%{?ksmp:, SMP}).
 
 %build
 %configure --enable-kernel-modules --enable-pppd-plugin --enable-asterisk-modules \
-	   --with-asterisk-modules=%{_libdir}/asterisk/modules 
+	   --with-asterisk-modules=%{_libdir}/asterisk/modules
 #make KINCLUDES=/lib/modules/%{kversion}/build/include KSMP=%{?ksmp:-D__SMP__} \
-#     KERNEL:=%{kernel}  
+#     KERNEL:=%{kernel}
 
-make 
+make
 
 
 %install
@@ -179,8 +179,8 @@ fi
 %config(noreplace) /etc/%{name}/
 %config(noreplace)%{_sysconfdir}/sysconfig/%{name}
 %doc ChangeLog
-%doc AUTHORS COPYING INSTALL NEWS README TODO 
-%doc samples 
+%doc AUTHORS COPYING INSTALL NEWS README TODO
+%doc samples
 %{_libdir}/*.so
 %{_libdir}/*.so.*
 %{_sbindir}

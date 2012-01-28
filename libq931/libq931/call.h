@@ -300,7 +300,7 @@ void q931_int_progress_indication(
 	struct q931_call *call,
 	struct q931_ces *ces,
 	const struct q931_ies *ies);
-void q931_int_release_indication( 
+void q931_int_release_indication(
 	struct q931_call *call,
 	struct q931_ces *ces,
 	const struct q931_ies *ies);

@@ -317,11 +317,11 @@ static irqreturn_t hfc_interrupt(int irq, void *dev_id, struct pt_regs *regs)
 			hfc_handle_fifo_tx_interrupt(
 				&card->fifos[hfc_FIFO_D][TX]);
 
-		if (s1 & hfc_INT_S1_B1TRANS)                                     
+		if (s1 & hfc_INT_S1_B1TRANS)
 			hfc_handle_fifo_tx_interrupt(
 				&card->fifos[hfc_FIFO_B1][TX]);
 
-		if (s1 & hfc_INT_S1_B2TRANS)                                     
+		if (s1 & hfc_INT_S1_B2TRANS)
 			hfc_handle_fifo_tx_interrupt(
 				&card->fifos[hfc_FIFO_B2][TX]);
 	}

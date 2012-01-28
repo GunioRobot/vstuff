@@ -160,7 +160,7 @@ static int vgsm_tty_write(
 					(unsigned char *)buf, count);
 	}
 
-#elif   LINUX_VERSION_CODE < KERNEL_VERSION(2,6,33) 
+#elif   LINUX_VERSION_CODE < KERNEL_VERSION(2,6,33)
 	copied_bytes = __kfifo_put(me->tx.fifo,
 				(unsigned char *)buf, count);
 #else
@@ -480,7 +480,7 @@ static int vgsm_tty_do_fw_upgrade(
 		pos += 7;
 	}
 
-	return 0; 
+	return 0;
 
 err_copy_from_user_payload:
 err_completion_timeout:

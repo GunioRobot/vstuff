@@ -317,7 +317,7 @@ static void vgsm_mesim_local_open(struct vgsm_mesim_local *mesim_local)
 	newtio.c_iflag = IGNBRK | IGNPAR;
 	newtio.c_oflag = 0;
 	newtio.c_lflag = 0;
-	
+
 //	newtio.c_ospeed = 8636;
 //	newtio.c_ispeed = 8636;
 
@@ -338,7 +338,7 @@ static void vgsm_mesim_local_open(struct vgsm_mesim_local *mesim_local)
 	newtio.c_cc[VWERASE]	= 0;
 	newtio.c_cc[VLNEXT]	= 0;
 	newtio.c_cc[VEOL2]	= 0;
-	
+
 	if (tcflush(mesim_local->fd, TCIOFLUSH) < 0) {
 		ast_log(LOG_ERROR,
 			"%s: tcflush(TCIOFLUSH):  %s\n",

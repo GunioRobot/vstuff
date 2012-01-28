@@ -70,7 +70,7 @@ struct vnd_netdevice
 	struct ks_chan ks_chan_e_rx;
 	struct ks_chan ks_chan_e_tx;
 
-	struct visdn_port *remote_port; 
+	struct visdn_port *remote_port;
 
 	struct net_device_stats stats;
 

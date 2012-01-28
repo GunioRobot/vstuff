@@ -97,9 +97,9 @@ static ssize_t hfc_show_rx_fifo_size(
 
 }
 
- static VISDN_CHAN_ATTR(rx_fifo_size, S_IRUGO, 
-		hfc_show_rx_fifo_size, 
-		NULL); 
+ static VISDN_CHAN_ATTR(rx_fifo_size, S_IRUGO,
+		hfc_show_rx_fifo_size,
+		NULL);
 
 /*---------------------------------------------------------------------------*/
 

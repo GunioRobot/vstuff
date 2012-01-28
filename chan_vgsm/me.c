@@ -734,7 +734,7 @@ static int vgsm_me_config_from_var(
 	struct vgsm_me_config *mc,
 	struct ast_variable *var)
 {
-        
+
 	if (!strcasecmp(var->name, "device")) {
 		strncpy(mc->device_filename, var->value,
 			sizeof(mc->device_filename));
@@ -757,13 +757,13 @@ static int vgsm_me_config_from_var(
 
 			return -1;
 		}
-	
+
 	} else if (!strcasecmp(var->name, "mohinterpret")) {
-		strncpy(mc->mohinterpret, var->value, sizeof(mc->mohinterpret));	
+		strncpy(mc->mohinterpret, var->value, sizeof(mc->mohinterpret));
 	} else if (!strcasecmp(var->name, "language")) {
 		strncpy(mc->language, var->value, sizeof(mc->language));
 	} else if (!strcasecmp(var->name, "context")) {
-		strncpy(mc->context, var->value, sizeof(mc->context));	
+		strncpy(mc->context, var->value, sizeof(mc->context));
 	} else if (!strcasecmp(var->name, "pin")) {
 		strncpy(mc->pin, var->value, sizeof(mc->pin));
 	} else if (!strcasecmp(var->name, "rx_gain")) {
@@ -915,7 +915,7 @@ sim_device_filename:
 #else
 	} else if (!ast_jb_read_conf(&mc->jbconf, var->name, var->value)) {
 #endif
-	
+
 	} else {
 		return -1;
 	}
@@ -927,7 +927,7 @@ static void vgsm_me_config_copy(
 	struct vgsm_me_config *dst,
 	const struct vgsm_me_config *src)
 {
-	
+
 	strncpy(dst->mohinterpret, src->mohinterpret,
 		sizeof(dst->mohinterpret));
 	strncpy(dst->language, src->language,
@@ -1480,7 +1480,7 @@ void vgsm_me_counter_inc(
 	counter->count = 0;
 
 	list_add_tail(&counter->node, list);
-	
+
 found:
 	counter->count++;
 
@@ -1620,7 +1620,7 @@ static void vgsm_me_received_hangup(struct vgsm_me *me)
 			ast_softhangup(ast_chan, AST_SOFTHANGUP_DEV);
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 			ast_mutex_unlock(&ast_chan->lock);
-#else	
+#else
 			ast_mutex_unlock(&ast_chan->lock_dont_use);
 #endif
 		}
@@ -2725,7 +2725,7 @@ static int vgsm_me_update_common_cell_info(
 		ast_log(LOG_ERROR, "Cannot parse MCC '%s'\n", line);
 		goto err_moni;
 	}
-	
+
 	if (sscanf(field, "%hu", &cell->mcc) != 1)
 		cell->mcc = 0;
 
@@ -2733,7 +2733,7 @@ static int vgsm_me_update_common_cell_info(
 		ast_log(LOG_ERROR, "Cannot parse MNC '%s'\n", line);
 		goto err_moni;
 	}
-	
+
 	if (sscanf(field, "%hu", &cell->mnc) != 1)
 		cell->mnc = 0;
 
@@ -2741,7 +2741,7 @@ static int vgsm_me_update_common_cell_info(
 		ast_log(LOG_ERROR, "Cannot parse LAC '%s'\n", line);
 		goto err_moni;
 	}
-	
+
 	if (sscanf(field, "%hx", &cell->lac) != 1)
 		cell->lac = 0;
 
@@ -2749,7 +2749,7 @@ static int vgsm_me_update_common_cell_info(
 		ast_log(LOG_ERROR, "Cannot parse CID '%s'\n", line);
 		goto err_moni;
 	}
-	
+
 	if (sscanf(field, "%hx", &cell->id) != 1)
 		cell->id = 0;
 
@@ -2900,7 +2900,7 @@ static int vgsm_update_smond(struct vgsm_me *me)
 	ast_mutex_unlock(&me->lock);
 
 	return 0;
-	
+
 err_moni2:
 	ast_mutex_unlock(&me->lock);
 err_moni:
@@ -3467,7 +3467,7 @@ static int vgsm_me_prepin_configure(
 			mc->amr_enabled ? "enabled" : "disabled");
 	if (err != VGSM_RESP_OK)
 		goto err_no_req;
-	
+
 	/* Configure GSM codec */
 	int csv_mode = 0;
 	if (!mc->gsm_hr_enabled)
@@ -3476,7 +3476,7 @@ static int vgsm_me_prepin_configure(
 		csv_mode = 0;
 	else if (mc->gsm_preferred == VGSM_CODEC_GSM_HR)
 		csv_mode = 1;
-	
+
 	err = vgsm_req_make_wait_result(comm, 5 * SEC,
 			"AT^SCFG=\"Call/SpeechVersion1\",\"%d\"",
 			csv_mode);
@@ -3491,8 +3491,8 @@ static int vgsm_me_prepin_configure(
 
 	/* Sets current time on me */
 	if (mc->set_clock) {
-			
-#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)			
+
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		struct tm tm;
 		time_t ct = time(NULL);
 #else
@@ -3501,7 +3501,7 @@ static int vgsm_me_prepin_configure(
 #endif
 
 	 ast_localtime(&ct, &tm, NULL);
-	
+
 		err = vgsm_req_make_wait_result(comm, 200 * MILLISEC,
 			"AT+CCLK=\"%02d/%02d/%02d,%02d:%02d:%02d%+03ld\"",
 			tm.tm_year % 100,
@@ -3878,7 +3878,7 @@ static int vgsm_me_update_static_info(
 	ast_mutex_unlock(&me->lock);
 
 	vgsm_req_put(req);
-	
+
 	/*--------*/
 	req = vgsm_req_make_wait(comm, 100 * MILLISEC, "AT^SCKS?");
 	err = vgsm_req_status(req);
@@ -3920,7 +3920,7 @@ static int vgsm_me_update_static_info(
 
 	if (!me->sim.inserted)
 		goto no_sim;
-	
+
 	/*--------*/
 	req = vgsm_req_make_wait(comm, 20 * SEC, "AT+CIMI");
 	err = vgsm_req_status(req);
@@ -4182,7 +4182,7 @@ static int vgsm_me_open(
 	tio.c_iflag = 0;
 	tio.c_oflag = 0;
 	tio.c_lflag = 0;
-	
+
 	tio.c_cc[VINTR]	= 0;
 	tio.c_cc[VQUIT]	= 0;
 	tio.c_cc[VERASE]	= 0;
@@ -4200,7 +4200,7 @@ static int vgsm_me_open(
 	tio.c_cc[VWERASE]	= 0;
 	tio.c_cc[VLNEXT]	= 0;
 	tio.c_cc[VEOL2]	= 0;
-	
+
 	if (tcsetattr(me->me_fd, TCSANOW, &tio) < 0) {
 		vgsm_me_set_status(me,
 			VGSM_ME_STATUS_CLOSED, FAILED_RETRY_TIME,
@@ -4338,7 +4338,7 @@ err_me_fcntl:
 err_me_open:
 	vgsm_me_config_put(mc);
 
-	return err; 
+	return err;
 }
 
 static void vgsm_me_initialize(
@@ -5659,8 +5659,8 @@ static int vgsm_me_show_serial(int fd, struct vgsm_me *me)
 		(status & TIOCM_RTS) ? "ON" : "OFF",
 		(status & TIOCM_CTS) ? "ON" : "OFF", icount.cts,
 		(status & TIOCM_DTR) ? "ON" : "OFF",
-		(status & TIOCM_DSR) ? "ON" : "OFF", icount.dsr, 
-		(status & TIOCM_RI)  ? "ON" : "OFF", icount.rng, 
+		(status & TIOCM_DSR) ? "ON" : "OFF", icount.dsr,
+		(status & TIOCM_RI)  ? "ON" : "OFF", icount.rng,
 		(status & TIOCM_CD)  ? "ON" : "OFF", icount.dcd,
 		icount.rx,
 		icount.tx,
@@ -5809,10 +5809,10 @@ char *err1;
 		return vgsm_me_show_complete(a->line, a->word, a->pos, a->n);
 	}
 
-#endif	
+#endif
 	struct vgsm_me *me;
 	int err;
-#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)		
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc >= 4) {
 		me = vgsm_me_get_by_name(argv[3]);
 		if (!me) {
@@ -5845,7 +5845,7 @@ char *err1;
 			else {
 				ast_cli(fd, "Command '%s' unrecognized\n",
 					argv[4]);
-#else	
+#else
 	if (a->argc >= 4) {
 		me = vgsm_me_get_by_name(a->argv[3]);
 		if (!me) {
@@ -6157,9 +6157,9 @@ static char *vgsm_me_cli_power_func(struct ast_cli_entry *e, int cmd, struct ast
 		struct vgsm_me *me;
 		list_for_each_entry(me, &vgsm.mes_list, node) {
 			ast_mutex_lock(&me->lock);
-#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)	
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 			func(fd, me);
-#else	
+#else
 			func(a->fd, me);
 #endif
 			ast_mutex_unlock(&me->lock);
@@ -6184,7 +6184,7 @@ err_missing_me:
 	   err1=CLI_SHOWUSAGE;
 	if (err==RESULT_SUCCESS)
 	   err1=CLI_SUCCESS;
-	
+
 	return err1;
 #endif
 }
@@ -6320,7 +6320,7 @@ static char *vgsm_me_cli_reset_func(struct ast_cli_entry *e, int cmd, struct ast
 		ast_mutex_lock(&me->lock);
 		err = vgsm_me_cli_reset_do(a->fd, me);
 		ast_mutex_unlock(&me->lock);
-#endif	
+#endif
 
 		vgsm_me_put(me);
 	} else {
@@ -6332,7 +6332,7 @@ static char *vgsm_me_cli_reset_func(struct ast_cli_entry *e, int cmd, struct ast
 			ast_mutex_lock(&me->lock);
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 			err = vgsm_me_cli_reset_do(fd, me);
-#else	
+#else
 			err = vgsm_me_cli_reset_do(a->fd, me);
 #endif
 			ast_mutex_unlock(&me->lock);
@@ -6466,7 +6466,7 @@ static char *vgsm_me_cli_service_func(struct ast_cli_entry *e, int cmd, struct a
 #endif
 	int err;
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
-	
+
 	if (argc < 4) {
 		ast_cli(fd, "Missing ME name\n\n");
 		err = RESULT_SHOWUSAGE;
@@ -6565,7 +6565,7 @@ static char *vgsm_me_cli_service_func(struct ast_cli_entry *e, int cmd, struct a
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
 #else
-	return CLI_SUCCESS;	
+	return CLI_SUCCESS;
 #endif
 
 err_me_not_found:
@@ -6583,7 +6583,7 @@ err_missing_me:
 	   err1=CLI_SUCCESS;
 	return err1;
 #endif
-	
+
 }
 
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
@@ -6684,7 +6684,7 @@ static char *vgsm_me_cli_identify_func(struct ast_cli_entry *e, int cmd, struct 
 #endif
 	int err;
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
-	
+
 	if (argc < 4) {
 		ast_cli(fd, "Missing ME name\n\n");
 		err = RESULT_SHOWUSAGE;
@@ -6787,7 +6787,7 @@ err_missing_me:
 	   err1=CLI_SUCCESS;
 	return err1;
 #endif
-	
+
 }
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 static char vgsm_me_cli_identify_help[] =
@@ -6878,7 +6878,7 @@ static char *vgsm_me_cli_operator_func(struct ast_cli_entry *e, int cmd, struct 
 
 #endif
 	int err;
-	
+
 
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 4) {
@@ -7007,7 +7007,7 @@ err_missing_me:
 	  err1=CLI_SUCCESS;
 	return err1;
 #endif
-	
+
 }
 
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
@@ -7092,7 +7092,7 @@ static char *vgsm_me_cli_pin_set_func(struct ast_cli_entry *e, int cmd, struct a
 #endif
 
 	int err;
-	
+
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 5) {
 		ast_cli(fd, "Missing ME name\n");
@@ -7200,7 +7200,7 @@ static char *vgsm_me_cli_pin_set_func(struct ast_cli_entry *e, int cmd, struct a
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
 #else
-	return CLI_SUCCESS; 
+	return CLI_SUCCESS;
 #endif
 
 err_response:
@@ -7224,7 +7224,7 @@ err_missing_me:
 
       return err1;
 #endif
-	
+
 }
 
 
@@ -7291,7 +7291,7 @@ static char *vgsm_me_cli_pin_input_func(struct ast_cli_entry *e, int cmd, struct
 
 
 	int err;
-	
+
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 5) {
 		ast_cli(fd, "Missing ME name\n");
@@ -7432,7 +7432,7 @@ static char *vgsm_me_cli_pin_input_func(struct ast_cli_entry *e, int cmd, struct
 				if (strcmp(first_line->text, "+CPIN: READY")) {
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 					ast_cli(fd,
-#else	
+#else
 					ast_cli(a->fd,
 #endif
 						"Error: PIN not ready:"
@@ -7501,7 +7501,7 @@ static char *vgsm_me_cli_pin_input_func(struct ast_cli_entry *e, int cmd, struct
 	vgsm_me_put(me);
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
-#else	
+#else
 	return CLI_SUCCESS;
 #endif
 
@@ -7586,10 +7586,10 @@ static char *vgsm_me_cli_puk_input_func(struct ast_cli_entry *e, int cmd, struct
 	case CLI_GENERATE:
 		return vgsm_me_cli_puk_input_complete(a->line, a->word, a->pos, a->n);
 	}
-	
+
 #endif
 	int err;
-	
+
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 4) {
 		ast_cli(fd, "Missing ME name\n");
@@ -7740,7 +7740,7 @@ static char *vgsm_me_cli_puk_input_func(struct ast_cli_entry *e, int cmd, struct
 	} else {
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Unknown response '%s'\n", first_line->text);
-#else	
+#else
 		ast_cli(a->fd, "Unknown response '%s'\n", first_line->text);
 #endif
 		err = RESULT_FAILURE;
@@ -7822,7 +7822,7 @@ static int vgsm_me_cli_sms_send_func(int fd, int argc, char *argv[])
 static char *vgsm_me_cli_sms_send_func(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
 #endif
 
-{	
+{
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 
 #else
@@ -7845,9 +7845,9 @@ static char *vgsm_me_cli_sms_send_func(struct ast_cli_entry *e, int cmd, struct 
 	}
 
 #endif
-	
+
 	int err = RESULT_SUCCESS;
-	
+
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 5) {
 		ast_cli(fd, "Missing me\n");
@@ -8165,7 +8165,7 @@ static char *vgsm_me_cli_forwarding_func(struct ast_cli_entry *e, int cmd, struc
 
 #endif
 	int err;
-	
+
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 4) {
 		ast_cli(fd, "Missing ME name\n");
@@ -8311,7 +8311,7 @@ static char *vgsm_me_cli_rawcommand_func(struct ast_cli_entry *e, int cmd, struc
 #endif
 
 	int err;
-	
+
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc < 4) {
 		ast_cli(fd, "Missing ME name\n");
@@ -8358,7 +8358,7 @@ static char *vgsm_me_cli_rawcommand_func(struct ast_cli_entry *e, int cmd, struc
 	if (vgsm_req_status(req) != VGSM_RESP_OK) {
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Error: %s (%d)\n",
-#else	
+#else
 		ast_cli(a->fd, "Error: %s (%d)\n",
 #endif
 			vgsm_me_error_to_text(vgsm_req_status(req)),
@@ -8593,7 +8593,7 @@ static char *vgsm_me_cli_debug_do(int fd, int argc, char *argv[],
 	if (argc < args)
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 		return RESULT_SHOWUSAGE;
-#else	
+#else
 		return CLI_SHOWUSAGE;
 #endif
 	struct vgsm_me *me = NULL;
@@ -8653,7 +8653,7 @@ static char *vgsm_me_cli_debug_do(int fd, int argc, char *argv[],
 	if (err==RESULT_SUCCESS)
 	   return CLI_SUCCESS;
 #endif
-		
+
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
 #else

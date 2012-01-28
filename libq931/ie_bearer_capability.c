@@ -425,7 +425,7 @@ void q931_ie_bearer_capability_dump(
 			ie->information_transfer_rate),
 		ie->information_transfer_rate);
 
-	report_ie_dump(abstract_ie, 
+	report_ie_dump(abstract_ie,
 		"%sUser information layer 1 protocol = %s (%d)\n", prefix,
 		q931_ie_bearer_capability_user_information_layer_1_protocol_to_text(
 			ie->user_information_layer_1_protocol),

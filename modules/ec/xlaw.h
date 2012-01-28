@@ -25,7 +25,7 @@
  *      The messiest part is normally finding the segment, but a little inline
  *      assembly can fix that on an i386.
  */
- 
+
 /*
  * Mu-law is basically as follows:
  *
@@ -97,7 +97,7 @@ static inline u8 linear_to_ulaw(s16 linear)
 static inline s16 ulaw_to_linear(u8 ulaw)
 {
     int t;
-    
+
     /* Complement to obtain normal u-law value. */
     ulaw = ~ulaw;
     /*
@@ -134,7 +134,7 @@ static inline u8 linear_to_alaw(s16 linear)
     int mask;
     int seg;
     int pcm_val;
-    
+
     pcm_val = linear;
 
     if (pcm_val >= 0)

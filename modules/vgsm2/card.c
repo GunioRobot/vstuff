@@ -279,7 +279,7 @@ static int vgsm_card_ioctl_fw_upgrade(
 	clear_bit(VGSM_CARD_FLAGS_FLASH_ACCESS, &card->flags);
 	vgsm_led_update();
 
-	return 0; 
+	return 0;
 
 err_timeout:
 err_copy_from_user_payload:
@@ -331,7 +331,7 @@ static int vgsm_card_ioctl_fw_read(
 
 	clear_bit(VGSM_CARD_FLAGS_FLASH_ACCESS, &card->flags);
 
-	return i; 
+	return i;
 
 err_copy_to_user_payload:
 	clear_bit(VGSM_CARD_FLAGS_FLASH_ACCESS, &card->flags);
@@ -1097,7 +1097,7 @@ int vgsm_card_probe(struct vgsm_card *card)
 	snprintf(card->device.class_id,
 		sizeof(card->device.class_id),
 		"vgsm2_card%d", card->id);
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30) 
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
 	snprintf(card->device.bus_id,
 		sizeof(card->device.bus_id),
 		"vgsm2_card%d", card->id);

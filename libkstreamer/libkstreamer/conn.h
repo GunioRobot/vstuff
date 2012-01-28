@@ -35,7 +35,7 @@ enum ks_conn_message_type
 struct ks_conn_message
 {
 	enum ks_conn_message_type type;
-	
+
 	int len;
 	__u8 data[];
 };

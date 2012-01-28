@@ -1497,7 +1497,7 @@ static int lapd_bind(
 		if (lapd_sock->usr_tme)
 			lapd_utme_put(lapd_sock->usr_tme);
 
-		lapd_sock->usr_tme = NULL; 
+		lapd_sock->usr_tme = NULL;
 		lapd_sock->tei = sal->sal_tei;
 		lapd_sock->state = LAPD_DLS_4_TEI_ASSIGNED;
 
@@ -1782,7 +1782,7 @@ int lapd_multiframe_wait_for_release(
 #else
 		prepare_to_wait_exclusive(sk_sleep(&lapd_sock->sk), &wait,
 			TASK_INTERRUPTIBLE);
-#endif		
+#endif
 		lapd_release_sock(lapd_sock);
 		/* Timeout is used only to detect abnormal cases */
 		timeout = schedule_timeout(timeout);
@@ -1883,8 +1883,8 @@ static struct proto_ops lapd_dgram_ops = {
 	.ioctl		= lapd_ioctl,
 	.listen		= lapd_listen,
 	.shutdown	= lapd_shutdown,
-	.setsockopt	= lapd_setsockopt, 
-	.getsockopt	= lapd_getsockopt, 
+	.setsockopt	= lapd_setsockopt,
+	.getsockopt	= lapd_getsockopt,
 	.sendmsg	= lapd_sendmsg,
 	.recvmsg	= lapd_recvmsg,
 	.mmap		= sock_no_mmap,

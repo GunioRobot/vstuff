@@ -6,6 +6,6 @@ diff -urN visdn-0.0.0-/scripts/visdn_configurator.in visdn-0.0.0/scripts/visdn_c
  					"$NETDEV_REQ_DEVNAME" \
  					"$NETDEV_PROTOCOL" || return
 +				sleep 5
- 
+
  				if [ "$NETDEV_TYPE" = "PRI" ] ; then
  					$VISDNCTL netdev \

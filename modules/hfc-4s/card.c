@@ -1015,7 +1015,7 @@ err_switch_register:
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
 #define dev_pcigsm &(card->pci_dev->dev)
 #define dev_name(dev_pcigsm) card->pci_dev->dev.bus_id
-#endif 
+#endif
 	hfc_msg(KERN_ERR, "HFC card at %s-%s registration failure: %d\n",
 		card->pci_dev->dev.bus->name,
 		dev_name(&(card->pci_dev->dev)),
@@ -1128,7 +1128,7 @@ int hfc_card_probe(struct hfc_card *card)
 				err = -ENOMEM;
 				goto err_st_port_create;
 			}
-		
+
 			if (card->num_st_ports == 4)
 				card->st_ports[i]->led = &card->leds[i];
 		}

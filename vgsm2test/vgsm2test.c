@@ -331,7 +331,7 @@ static char *requester_str(int color, const char *def, char *fmt, ...)
 	set_field_buffer(str, 0, def);
 
 	set_field_back(str, A_UNDERLINE | COLOR_PAIR(COLOR_BLACK));
-	field_opts_off(str, O_AUTOSKIP); 
+	field_opts_off(str, O_AUTOSKIP);
 
 	FIELD *fields[] = { str, NULL };
 	FORM *form = new_form(fields);
@@ -523,7 +523,7 @@ static int t_dai(struct vgsm_card *card, int par)
 {
 	int i;
 
-	vgsm_outl(card, VGSM_R_ME_FIFO_SETUP(0), 
+	vgsm_outl(card, VGSM_R_ME_FIFO_SETUP(0),
 		VGSM_R_ME_FIFO_SETUP_V_RX_LINEAR |
 		VGSM_R_ME_FIFO_SETUP_V_TX_LINEAR);
 
@@ -559,7 +559,7 @@ exit(0);*/
 //		log_info("VGSM_R_ME_FIFO_TX_IN: 0x%08x\n", vgsm_inl(card, VGSM_R_ME_FIFO_TX_IN(0)));
 //		log_info("VGSM_R_ME_FIFO_TX_OUT: 0x%08x\n", vgsm_inl(card, VGSM_R_ME_FIFO_TX_OUT(0)));
 
-		
+
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
 
@@ -2028,11 +2028,11 @@ static struct vgsm_card *select_card(
 		items = realloc(items, sizeof(*items) * (n_items + 2));
 
 		items[n_items] = new_item(card->pci_device->location, descr);
-	
+
 		n_items++;
 		items[n_items] = NULL;
 	}
-	
+
 	menu = new_menu(items);
 
 	int rows, cols;
@@ -2087,7 +2087,7 @@ static struct vgsm_card *select_card(
 			goto out;
 		break;
 		}
-	}	
+	}
 
 out:;
 

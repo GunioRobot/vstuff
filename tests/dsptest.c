@@ -565,7 +565,7 @@ static void check_emif(struct c6412 *c6412)
 
 	reg_writel(c6412, R_SDTIM, R_SDTIM_PERIOD(0x5d));
 
-	reg_writel(c6412, R_SDEXT, 
+	reg_writel(c6412, R_SDEXT,
 		R_SDEXT_TCL_2 |
 		R_SDEXT_TRAS(6) |
 		R_SDEXT_TRRD_2 |
@@ -596,10 +596,10 @@ usleep(100000);
 
 	int val;
 	for(val=0; val<=0xff; val++) {
-		reg_writel(c6412, R_DSPP, 0x200); 
+		reg_writel(c6412, R_DSPP, 0x200);
 		memset(c6412->mem, val, 0x400000);
 
-		reg_writel(c6412, R_DSPP, 0x201); 
+		reg_writel(c6412, R_DSPP, 0x201);
 		memset(c6412->mem, val, 0x400000);
 
 		__u32 val2 = val << 24 | val << 16 | val << 8 | val;
@@ -616,7 +616,7 @@ usleep(100000);
 			}
 		}
 
-		reg_writel(c6412, R_DSPP, 0x201); 
+		reg_writel(c6412, R_DSPP, 0x201);
 		for (i=0; i<0x400000; i+=4) {
 			__u32 a = readl(c6412->mem + i);
 
@@ -636,10 +636,10 @@ static void check_gpio(struct c6412 *c6412)
 {
 	reg_writel(c6412, R_GPEN, 0x000000f0);
 	reg_writel(c6412, R_GPDIR, 0x000000f0);
-	reg_writel(c6412, R_GPVAL, 0x00000008);	
+	reg_writel(c6412, R_GPVAL, 0x00000008);
 
 /*	for(i=0; i<10000; i++) {
-		reg_writel(c6412, R_GPVAL, 0x00000008 | ((i & 0x3) << 6));	
+		reg_writel(c6412, R_GPVAL, 0x00000008 | ((i & 0x3) << 6));
 		usleep(100000);
 	}*/
 }
@@ -651,20 +651,20 @@ static void upload_firmware(struct c6412 *c6412)
 		perror("open(dsptest.fw)\n");
 		return;
 	}
-	
-	reg_writel(c6412, R_DSPP, 0x0); 
+
+	reg_writel(c6412, R_DSPP, 0x0);
 
 	read(fd, c6412->mem, 10000);
 
 	__u8 fw[] = {
-		0x2A, 0x04, 0x71, 0x02, 
-		0xEB, 0x00, 0x00, 0x02, 
-		0x28, 0x00, 0x90, 0x01, 
-		0x76, 0x02, 0x0C, 0x02, 
-		0x00, 0x00, 0x00, 0x00, 
-		0x20, 0xA1, 0x02, 0x00, 
-		0x00, 0x00, 0x00, 0x00, 
-		0x00, 0x00, 0x00, 0x00, 
+		0x2A, 0x04, 0x71, 0x02,
+		0xEB, 0x00, 0x00, 0x02,
+		0x28, 0x00, 0x90, 0x01,
+		0x76, 0x02, 0x0C, 0x02,
+		0x00, 0x00, 0x00, 0x00,
+		0x20, 0xA1, 0x02, 0x00,
+		0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00,
 	};
 /*	__u8 fw[] = {
 		0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

@@ -167,7 +167,7 @@ static int __init ks_init_module(void)
 	ks_system_device.parent = NULL;
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 	ks_system_device.driver_data = NULL;
-#else 
+#else
 	dev_set_drvdata(&ks_system_device,NULL);
 #endif
 	ks_system_device.release = ks_system_device_release;

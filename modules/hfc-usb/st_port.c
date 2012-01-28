@@ -455,7 +455,7 @@ void hfc_st_port_update_sctrl(struct hfc_st_port *port)
 {
 	u8 sctrl = 0;
 
-	/* Select the non-capacitive line mode for the S/T interface */ 
+	/* Select the non-capacitive line mode for the S/T interface */
 	sctrl = HFC_REG_SCTRL_NON_CAPACITIVE;
 
 	if (port->nt_mode)

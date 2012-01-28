@@ -73,7 +73,7 @@ int q931_ie_channel_identification_read_from_buf(
 	}
 
 	int nextoct = 0;
-	
+
 	struct q931_ie_channel_identification_onwire_3 *oct_3 =
 		(struct q931_ie_channel_identification_onwire_3 *)
 		(buf + nextoct++);
@@ -277,7 +277,7 @@ static int q931_ie_channel_identification_write_to_buf_pra(
 		oct_3->info_channel_selection = Q931_IE_CI_ICS_PRA_INDICATED;
 
 	len++;
-	
+
 	// Interface implicit, do not add Interface identifier
 
 	struct q931_ie_channel_identification_onwire_3c *oct_3c =

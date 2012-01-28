@@ -41,7 +41,7 @@
 
 
 #ifdef DEBUG_CODE
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)) 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30))
 #define vgsm_debug_me(me, dbglevel, format, arg...)			\
 	if (debug_level >= dbglevel)					\
 		printk(KERN_DEBUG vgsm_DRIVER_PREFIX			\
@@ -68,7 +68,7 @@
 #define vgsm_debug_me(me, dbglevel, format, arg...) do {} while (0)
 #endif
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)) 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30))
 #define vgsm_msg_me(me, level, format, arg...)				\
 	printk(level vgsm_DRIVER_PREFIX					\
 		"%s-%s:"						\

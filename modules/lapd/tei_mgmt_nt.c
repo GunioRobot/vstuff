@@ -141,7 +141,7 @@ void lapd_ntme_tc_T201_timer(unsigned long data)
 
 		/* We need to try a second time */
 		tc->count++;
-		
+
 		lapd_ntme_send_tei_check_request(tme, tc->tei);
 		lapd_ntme_tc_reset_timer(tc, &tc->T201_timer,
 			jiffies + tme->T201);
@@ -154,7 +154,7 @@ void lapd_ntme_tc_T201_timer(unsigned long data)
 
 		} else {
 			lapd_ntme_tc_check_second(tc, tc->tei);
-			
+
 		}
 
 		list_del(&tc->node);
@@ -516,7 +516,7 @@ void lapd_ntme_put(
 		struct lapd_ntme_tei_check *tc, *tpos;
 		list_for_each_entry_safe(tc, tpos, &tme->tei_checks, node) {
 			lapd_ntme_tc_stop_timer(tc, &tc->T201_timer);
-			
+
 			list_del(&tc->node);
 			kfree(tc);
 		}

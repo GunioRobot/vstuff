@@ -10,8 +10,8 @@
 ### BEGIN INIT INFO
 # Provides:          visdn
 # Required-Start:    $syslog
-# Should-Start: 
-# Required-Stop:     $syslog 
+# Should-Start:
+# Required-Stop:     $syslog
 # Should-Stop:
 # Default-Start:     3 5
 # Default-Stop:      0 1 2 6
@@ -24,7 +24,7 @@
 # Note: Special treatment of stop for LSB conformance
 
 VISDNCFG_BIN=/usr/sbin/visdn_configurator
-test -x $VISDNCFG_BIN || { echo "$VISDNCFG_BIN not installed"; 
+test -x $VISDNCFG_BIN || { echo "$VISDNCFG_BIN not installed";
 	if [ "$1" = "stop" ]; then exit 0;
 	else exit 5; fi; }
 
@@ -34,7 +34,7 @@ test -r $VISDN_CONFIG || { echo "$VISDN_CONFIG not existing";
 	if [ "$1" = "stop" ]; then exit 0;
 	else exit 6; fi; }
 
-# Read config	
+# Read config
 . $VISDN_CONFIG
 
 . /etc/rc.status
@@ -100,7 +100,7 @@ case "$1" in
         rmmod visdn-ppp
         rmmod visdn-streamport
         rmmod visdn-netdev
-	rmmod visdn_softcxc 
+	rmmod visdn_softcxc
 	rmmod visdn_core
 
 	# Remember status and be verbose
@@ -139,7 +139,7 @@ case "$1" in
 	echo -n "Reload service zaptel "
 	## if it supports it:
 
-	$VISDNCFG_BIN	
+	$VISDNCFG_BIN
 	rc_status -v
 
 	## Otherwise:
@@ -154,7 +154,7 @@ case "$1" in
 	echo -n "Reload service zaptel "
 	$VISDNCFG_BIN
 	rc_status -v
-	
+
 	## Otherwise if it does not support reload:
 	#rc_failed 3
 	#rc_status -v
@@ -171,7 +171,7 @@ case "$1" in
 	# 3 - service not running (unused)
 	# 4 - service status unknown :-(
 	# 5--199 reserved (5--99 LSB, 100--149 distro, 150--199 appl.)
-	
+
 	# NOTE: checkproc returns LSB compliant status values.
 	#checkproc $FOO_BIN
 	# NOTE: rc_status knows that we called this init script with

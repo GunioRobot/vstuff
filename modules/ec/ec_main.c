@@ -137,7 +137,7 @@ static ssize_t vec_chan_ne_write(
 
 		/* Too many samples in other direction */
 
-		
+
 
 		printk(KERN_DEBUG "Detected %d slips\n",
 			kfifo_len(ec->fe_w_fifo));

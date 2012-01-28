@@ -487,7 +487,7 @@ int ks_pipeline_cmd_get(
 	int err;
 	struct ks_pipeline *pipeline;
 	int cnt = 1;
-  
+
 	ks_netlink_send_ack(state, nlh, NLM_F_MULTI);
 
 	/* No need to read_lock(&ks_pipelines_list_lock); because we are also
@@ -1282,7 +1282,7 @@ EXPORT_SYMBOL(ks_pipeline_last_node);
 int ks_pipeline_modinit()
 {
 	int err;
-	
+
 	ks_pipelines_kset = kset_create_and_add("pipelines", NULL, &kstreamer_kobj);
 	if (!ks_pipelines_kset) {
 	  err = -ENOMEM;

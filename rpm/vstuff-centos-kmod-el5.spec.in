@@ -44,7 +44,7 @@ Source0:        http://www.visdn.org/download/vstuff-%{version}.tar.gz
 
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  zlib-devel
-BuildArch:	i686 
+BuildArch:	i686
 ExclusiveArch:	i686 x86_64 ppc
 
 %description
@@ -99,10 +99,10 @@ do
     pushd _kmod_build_${kvariant}
 
     #cd modules
-    #make -C ${ksrc} SUBDIRS=${msrc} INSTALL_MOD_PATH=%{buildroot} INSTALL_MOD_DIR=extra/%{kmod_name} 
+    #make -C ${ksrc} SUBDIRS=${msrc} INSTALL_MOD_PATH=%{buildroot} INSTALL_MOD_DIR=extra/%{kmod_name}
     make -C ${ksrc} SUBDIRS=${msrc}/modules DESTDIR=%{buildroot} INSTALL_MOD_DIR=extra/%{kmod_name} INSTALL_MOD_PATH=%{buildroot} modules_install
- 
-    %if %{fedoraversion} == 0 
+
+    %if %{fedoraversion} == 0
         %{__mkdir_p} %{buildroot}/lib/modules/%{kverrel}${kvariant}/extra/%{kmod_name} 2>/dev/null
         %{__mv} %{buildroot}/lib/modules/%{kverrel}${kvariant}/extra/*.ko %{buildroot}/lib/modules/%{kverrel}${kvariant}/extra/%{kmod_name}
     %endif
@@ -119,5 +119,5 @@ rm -rf %{buildroot}
 
 %changelog
 * Fri Feb 15 2008 Matteo Brancaleoni <mbrancaleoni at voismart.it>
-- Initial kmod rpm 
+- Initial kmod rpm
 

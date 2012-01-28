@@ -82,9 +82,9 @@ struct vgsm_sim_atr_tb1_onwire
 struct vgsm_sim_atr_tc1_onwire
 {
 #if __BYTE_ORDER == __BIG_ENDIAN
-	__u8 n; 
+	__u8 n;
 #elif __BYTE_ORDER == __LITTLE_ENDIAN
-	__u8 n; 
+	__u8 n;
 #else
 #error Unsupported byte order
 #endif

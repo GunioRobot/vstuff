@@ -61,7 +61,7 @@ static int q931_prepare_header(
 
 	// Call reference
 	assert(call->call_reference > 0 &&
-		call->call_reference < 
+		call->call_reference <
 			(1 << ((hdr->call_reference_len * 8) - 1)));
 
 	q931_make_callref(frame + size,

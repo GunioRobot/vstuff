@@ -169,7 +169,7 @@ static int __init visdn_init_module(void)
 	   err = -ENOMEM;
 		goto err_kset_register;
 	}
-	
+
 	err = alloc_chrdev_region(&visdn_first_dev, 0, 2, visdn_MODULE_NAME);
 	if (err < 0)
 		goto err_alloc_chrdev_region;

@@ -317,7 +317,7 @@ struct vgsm_sms_deliver *vgsm_sms_deliver_init_from_pdu(
 			// What if tp_udl % 2 ?
 
 			int text_len = (tp_udl - udhl) / 2;
-			
+
 			sms->text = malloc(sizeof(wchar_t) * (text_len + 1));
 			if (!sms->text)
 				goto err_sms_text_alloc;
@@ -456,7 +456,7 @@ int vgsm_sms_deliver_spool(struct vgsm_sms_deliver *sms)
 		}
 	}
 	ast_mutex_unlock(&me->lock);
-	
+
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	struct tm tm;
 	time_t tim = time(NULL);
@@ -494,7 +494,7 @@ int vgsm_sms_deliver_spool(struct vgsm_sms_deliver *sms)
 	struct timeval tv = { sms->timestamp, };
 	ast_localtime(&tv, &tm, NULL);
 	ast_strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
-#endif	
+#endif
 	fprintf(f, "Date: %s\n", tmpstr);
 
 	fprintf(f, "X-SMS-Message-Type: SMS-DELIVER\n");
@@ -558,7 +558,7 @@ int vgsm_sms_deliver_spool(struct vgsm_sms_deliver *sms)
 		}
 
 		iconv_close(cd);
-		
+
 		fprintf(f, "%s\n", outbuffer);
 	}
 
@@ -654,7 +654,7 @@ int vgsm_sms_deliver_manager(struct vgsm_sms_deliver *sms)
 	ast_mutex_lock(&me->lock);
 	struct vgsm_me_config *mc = me->current_config;
 
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"Received: from GSM me %s", me->name);
 
 	if (me->net.status == VGSM_NET_STATUS_REGISTERED_HOME ||
@@ -686,25 +686,25 @@ int vgsm_sms_deliver_manager(struct vgsm_sms_deliver *sms)
 #endif
 	ast_localtime(&tim, &tm, NULL);
 	char tmpstr[40];
-#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)	
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
 #else
-	ast_strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);	
+	ast_strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
 #endif
 	sanprintf(text, sizeof(text),"; %s\r\n", tmpstr);
 
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"From: <%s%s@%s>\r\n",
 		vgsm_number_prefix(&sms->originating_address),
 		sms->originating_address.digits,
 		mc->sms_sender_domain);
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"Subject: SMS message\r\n");
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"MIME-Version: 1.0\r\n");
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"Content-Type: text/plain; charset=\"UTF-8\"\r\n");
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"Content-Transfer-Encoding: base64\r\n");
 
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
@@ -715,57 +715,57 @@ int vgsm_sms_deliver_manager(struct vgsm_sms_deliver *sms)
 	ast_localtime(&tv, &tm, NULL);
 	ast_strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
 #endif
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"Date: %s\r\n", tmpstr);
 
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"X-SMS-Message-Type: SMS-DELIVER\r\n");
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"X-SMS-Sender-NP: %s\r\n",
 		vgsm_numbering_plan_to_text(sms->originating_address.np));
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"X-SMS-Sender-TON: %s\r\n",
 		vgsm_type_of_number_to_text(sms->originating_address.ton));
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"X-SMS-Sender-Number: %s%s\r\n",
 		vgsm_number_prefix(&sms->originating_address),
 		sms->originating_address.digits);
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"X-SMS-SMCC-NP: %s\r\n",
 		vgsm_numbering_plan_to_text(sms->smcc_address.np));
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"X-SMS-SMCC-TON: %s\r\n",
 		vgsm_type_of_number_to_text(sms->smcc_address.ton));
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"X-SMS-SMCC-Number: %s%s\r\n",
 		vgsm_number_prefix(&sms->smcc_address),
 		sms->smcc_address.digits);
 
 	if (sms->message_class != -1)
-		sanprintf(text, sizeof(text), 
+		sanprintf(text, sizeof(text),
 		"X-SMS-Class: %d\r\n", sms->message_class);
 
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"X-SMS-More-Messages-To-Send: %s\r\n",
 		sms->more_messages_to_send ? "yes" : "no");
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"X-SMS-Reply-Path: %s\r\n", sms->reply_path ? "yes" : "no");
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"X-SMS-User-Data-Header-Indicator: %s\r\n",
 		sms->user_data_header_indicator ? "yes" : "no");
-	sanprintf(text, sizeof(text), 
+	sanprintf(text, sizeof(text),
 		"X-SMS-Status-Report-Indication: %s\r\n",
 		sms->status_report_indication ? "yes" : "no");
 
 	if (sms->user_data_header_indicator &&
 	    sms->udh_concatenate_maxmsg > 1) {
-		sanprintf(text, sizeof(text), 
+		sanprintf(text, sizeof(text),
 		"X-SMS-Concatenate-RefID: %d\r\n",
 			sms->udh_concatenate_refnum);
-		sanprintf(text, sizeof(text), 
+		sanprintf(text, sizeof(text),
 		"X-SMS-Concatenate-Total-Messages: %d\r\n",
 			sms->udh_concatenate_maxmsg);
-		sanprintf(text, sizeof(text), 
+		sanprintf(text, sizeof(text),
 		"X-SMS-Concatenate-Sequence-Number: %d\r\n",
 			sms->udh_concatenate_seqnum);
 	}

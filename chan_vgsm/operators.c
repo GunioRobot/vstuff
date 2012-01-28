@@ -124,7 +124,7 @@ static void vgsm_operators_countries_init(void)
 					var->name,
 					VGSM_OP_CONFIG_FILE);
 			}
-			
+
 			var = var->next;
 		}
 
@@ -210,7 +210,7 @@ static void vgsm_operators_info_init(void)
 					var->name,
 					VGSM_OP_CONFIG_FILE);
 			}
-			
+
 			var = var->next;
 		}
 

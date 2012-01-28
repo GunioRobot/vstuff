@@ -606,7 +606,7 @@ static int __init vppp_init_module(void)
 	snprintf(vppp_control_device.class_id,
 		sizeof(vppp_control_device.class_id),
 		"ppp");
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30) 
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
 	snprintf(vppp_control_device.bus_id,
 		sizeof(vppp_control_device.bus_id),
 		"ppp");
@@ -614,7 +614,7 @@ static int __init vppp_init_module(void)
 	dev_set_name(&vppp_control_device,"ppp");
 #endif
 
-	
+
 #ifdef HAVE_CLASS_DEV_DEVT
 	vppp_control_device.devt = vppp_first_dev;
 #endif

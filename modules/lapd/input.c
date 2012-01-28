@@ -57,7 +57,7 @@ static int lapd_pass_frame_to_socket(
 	if (!sock_owned_by_user(&lapd_sock->sk)) {
 		queued = lapd_dlc_recv(lapd_sock, skb);
 	} else {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,33) 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,33)
 		sk_add_backlog(&lapd_sock->sk, skb);
 #else
 		__sk_add_backlog(&lapd_sock->sk, skb);

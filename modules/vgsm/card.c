@@ -300,7 +300,7 @@ static void vgsm_card_tx_tasklet(unsigned long data)
 #else
 				int bytes_to_send =
 					kfifo_out(me->tx.fifo, buf, 7);
-#endif	
+#endif
 				wake_up(&me->tx.wait_queue);
 
 				vgsm_me_send_string(me, buf,

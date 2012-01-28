@@ -39,7 +39,7 @@ static __u8 swap_nibbles(__u8 val)
 {
         return (val & 0xf0 ) >> 4 | (val & 0x0f) << 4;
 }
-#endif 
+#endif
 
 int vgsm_bcd_to_text(
 	__u8 *buf, int nibbles,

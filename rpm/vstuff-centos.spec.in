@@ -25,7 +25,7 @@ Source11: 99-vgsm.rules
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 %description
-Versatile-ISDN (vISDN for short) is an attempt at writing an ISDN 
+Versatile-ISDN (vISDN for short) is an attempt at writing an ISDN
 implementation for Linux.
 
 vISDN is officially certified from TiLAB (and conforms to TBR)
@@ -117,8 +117,8 @@ fi
 %defattr(-,root,root,-)
 %config(noreplace)%{_sysconfdir}/udev/rules.d/*
 %doc ChangeLog
-%doc AUTHORS COPYING INSTALL NEWS README TODO 
-%doc samples 
+%doc AUTHORS COPYING INSTALL NEWS README TODO
+%doc samples
 %{_libdir}/*.so
 %{_libdir}/*.so.*
 %{_sbindir}

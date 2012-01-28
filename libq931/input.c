@@ -225,10 +225,10 @@ static void q931_ieid_fill_diagnostic_from_list(
 
 		if (*diagnostics_len >= max_len)
 			return;
-		
+
 		if (entry->codeset != 0) {
 			/* Do a non-locking shift */
-			
+
 			diagnostics[*diagnostics_len] =
 			       Q931_IE_SHIFT | 0x08 | entry->codeset;
 			(*diagnostics_len)++;
@@ -360,7 +360,7 @@ static void q931_decode_ie(
 				" for which comprehension is required\n",
 				codeset, ie_id);
 		}
-	
+
 		return;
 	}
 
@@ -383,7 +383,7 @@ static void q931_decode_ie(
 			return;
 		}
 	}
-	
+
 	struct q931_ie *ie;
 
 	ie = ie_class->alloc();
@@ -469,7 +469,7 @@ __u8 q931_decode_shift_ie(
 static void q931_decoder_status_init(struct q931_decoder_status *ds)
 {
 	memset(ds, 0, sizeof(*ds));
-	
+
 	INIT_LIST_HEAD(&ds->mandatory_ies);
 
 	INIT_LIST_HEAD(&ds->invalid_mand_ies);
@@ -500,7 +500,7 @@ void q931_decode_ies(
 
 			if (q931_ie_usages[i].presence != Q931_IE_MANDATORY)
 				continue;
-			
+
 			q931_ieid_add_to_list(msg,
 				&ds->mandatory_ies,
 				q931_ie_usages[i].codeset,
@@ -541,9 +541,9 @@ void q931_decode_ies(
 
 			rawies_curpos++;
 		} else {
-			__u8 ie_len = 
+			__u8 ie_len =
 				*(__u8 *)(msg->rawies + rawies_curpos + 1);
-			
+
 			q931_decode_ie(msg, ds, intf, codeset, ie_id,
 				msg->rawies + rawies_curpos + 2,
 				ie_len,
@@ -611,14 +611,14 @@ int q931_call_decode_ies(
 			ie_class = q931_get_ie_class(entry->codeset, entry->id);
 
 			assert(ie_class);
-			
+
 			report_msg_cont(msg, LOG_INFO,
 				"Mandatory IE %d:%d (%s) is missing\n",
 				entry->codeset,
 				entry->id,
 				ie_class->name);
 		}
-		
+
 		struct q931_ie_cause *cause;
 		cause = q931_ie_cause_alloc();
 
@@ -628,7 +628,7 @@ int q931_call_decode_ies(
 			Q931_IE_C_CV_MANDATORY_INFORMATION_ELEMENT_IS_MISSING;
 
 		cause->diagnostics_len = sizeof(cause->diagnostics);
-		
+
 		q931_ieid_fill_diagnostic_from_list(
 			cause->diagnostics, &cause->diagnostics_len,
 			&ds.mandatory_ies);
@@ -676,7 +676,7 @@ int q931_call_decode_ies(
 			Q931_IE_C_CV_INVALID_INFORMATION_ELEMENT_CONTENTS;
 
 		cause->diagnostics_len = sizeof(cause->diagnostics);
-		
+
 		q931_ieid_fill_diagnostic_from_list(
 			cause->diagnostics, &cause->diagnostics_len,
 			&ds.invalid_mand_ies);
@@ -723,7 +723,7 @@ int q931_call_decode_ies(
 		cause->value = Q931_IE_C_CV_ACCESS_INFORMATION_DISCARDED;
 
 		cause->diagnostics_len = sizeof(cause->diagnostics);
-		
+
 		q931_ieid_fill_diagnostic_from_list(
 			cause->diagnostics, &cause->diagnostics_len,
 			&ds.invalid_access_ies);
@@ -747,7 +747,7 @@ int q931_call_decode_ies(
 			Q931_IE_C_CV_INVALID_INFORMATION_ELEMENT_CONTENTS;
 
 		cause->diagnostics_len = sizeof(cause->diagnostics);
-		
+
 		q931_ieid_fill_diagnostic_from_list(
 			cause->diagnostics, &cause->diagnostics_len,
 			&ds.invalid_opt_ies);
@@ -769,7 +769,7 @@ int q931_call_decode_ies(
 		cause->value = Q931_IE_C_CV_INFORMATION_ELEMENT_NON_EXISTENT;
 
 		cause->diagnostics_len = sizeof(cause->diagnostics);
-		
+
 		q931_ieid_fill_diagnostic_from_list(
 			cause->diagnostics, &cause->diagnostics_len,
 			&ds.unrecognized_ies);
@@ -787,7 +787,7 @@ int q931_call_decode_ies(
 		}
 		break;
 
-		case Q931_MT_DISCONNECT: 
+		case Q931_MT_DISCONNECT:
 		break;
 
 		case Q931_MT_RELEASE: {

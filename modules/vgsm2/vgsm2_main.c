@@ -149,7 +149,7 @@ static void vgsm_led_update_work_func(struct work_struct *work)
 	spin_lock(&vgsm_cards_list_lock);
 	list_for_each_entry(card, &vgsm_cards_list, cards_list_node) {
 
-		if (test_bit(VGSM_CARD_FLAGS_READY, &card->flags)) 
+		if (test_bit(VGSM_CARD_FLAGS_READY, &card->flags))
 			reschedule = reschedule ||
 					vgsm_card_led_update(card);
 	}

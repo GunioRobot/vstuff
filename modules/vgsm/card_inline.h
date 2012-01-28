@@ -70,7 +70,7 @@ static inline void vgsm_wait_e0(struct vgsm_card *card)
 }
 
 /* Send interrupt to micros - 0x01 for Micro 0, 0x02 for micro 1 */
-static inline void vgsm_interrupt_micro(struct vgsm_card *card, 
+static inline void vgsm_interrupt_micro(struct vgsm_card *card,
 	u8 value)
 {
 	mb();

@@ -90,7 +90,7 @@ static void hfc_port_do_deactivate_request(struct hfc_st_port *port)
 		del_timer(&port->timer_t1);
 	else
 		del_timer(&port->timer_t3);
-	
+
 	hfc_outb(card, hfc_A_ST_WR_STA,
 		hfc_A_ST_WR_STA_V_ST_ACT_DEACTIVATION);
 }

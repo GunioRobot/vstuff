@@ -202,7 +202,7 @@ struct vgsm_me_config
 	char mesim_device_filename[PATH_MAX];
 	char language[MAX_LANGUAGE];	      /*!< Default language for this user */
 	char mohinterpret[MAX_MUSICCLASS];    /*!< Music on Hold class */
-	
+
 
 	enum vgsm_flow_control flow_control;
 
@@ -261,7 +261,7 @@ struct vgsm_me
 	int refcnt;
 
 	ast_mutex_t lock;
-	
+
 	AST_DECLARE_STRING_FIELDS(
 		AST_STRING_FIELD(mohinterpret); /*!< MOH class to use when put on hold */
         );

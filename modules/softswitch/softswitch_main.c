@@ -184,7 +184,7 @@ static int kss_frame_xmit(
 
 	return res;
 }
-	
+
 static void kss_start_queue(
 	struct ks_node *node,
 	struct visdn_leg *src_leg)
@@ -299,7 +299,7 @@ static void kss_tx_error(
 		visdn_leg_put(dst);
 	}
 }
-#endif 
+#endif
 
 struct ks_node_ops kss_ops =
 {

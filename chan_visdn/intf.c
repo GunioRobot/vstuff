@@ -85,7 +85,7 @@ struct visdn_intf *visdn_intf_get(struct visdn_intf *intf)
 {
 	assert(intf);
 	assert(intf->refcnt > 0);
-	
+
 	ast_mutex_lock(&visdn.usecnt_lock);
 	intf->refcnt++;
 	ast_mutex_unlock(&visdn.usecnt_lock);
@@ -451,7 +451,7 @@ static void visdn_intf_set_status(
 	struct visdn_intf *intf,
 	enum visdn_intf_status status,
 	longtime_t timeout,
-	const char *fmt, ...) 
+	const char *fmt, ...)
 	__attribute__ ((format (printf, 4, 5)));
 
 static void visdn_intf_set_status(
@@ -1093,7 +1093,7 @@ static void visdn_print_intf_details(int fd, struct visdn_intf *intf)
 			if (intf->q931_intf->channels[i].call) {
 				struct q931_call *call =
 					intf->q931_intf->channels[i].call;
-				
+
 				ast_cli(fd, "  Call: %5d.%c %s",
 					call->call_reference,
 					(call->direction ==
@@ -1234,7 +1234,7 @@ static char *do_visdn_interface_show(struct ast_cli_entry *e, int cmd, struct as
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	if (argc == 3) {
 		ast_cli(fd, "Interface  Status         Role Mode TEI Calls\n");
-		
+
 		struct visdn_intf *intf;
 		ast_rwlock_rdlock(&visdn.intfs_list_lock);
 		list_for_each_entry(intf, &visdn.intfs_list, node)
@@ -1259,7 +1259,7 @@ static char *do_visdn_interface_show(struct ast_cli_entry *e, int cmd, struct as
 #else
 	if (a->argc == 3) {
 		ast_cli(a->fd, "Interface  Status         Role Mode TEI Calls\n");
-		
+
 		struct visdn_intf *intf;
 		ast_rwlock_rdlock(&visdn.intfs_list_lock);
 		list_for_each_entry(intf, &visdn.intfs_list, node)
@@ -1292,7 +1292,7 @@ static char visdn_interface_show_help[] =
 static struct ast_cli_entry visdn_interface_show =
 {
 	{ "visdn", "interface", "show", NULL },
-	do_visdn_interface_show, 
+	do_visdn_interface_show,
 	"Displays vISDN's interface information",
 	visdn_interface_show_help,
 	complete_visdn_interface_show,

@@ -41,7 +41,7 @@ diff -ur asterisk-1.4.17-orig/include/asterisk/build.h asterisk-1.4.17/include/a
 -#define BUILD_DATE "2008-01-31 11:04:22 UTC"
 +#define BUILD_DATE "2008-01-31 14:31:50 UTC"
  #define BUILD_USER "root"
- 
+
 diff -ur asterisk-1.4.17-orig/include/asterisk/frame.h asterisk-1.4.17/include/asterisk/frame.h
 --- asterisk-1.4.17-orig/include/asterisk/frame.h	2007-10-10 08:24:41.000000000 +0200
 +++ asterisk-1.4.17/include/asterisk/frame.h	2008-01-31 15:18:35.000000000 +0100
@@ -52,7 +52,7 @@ diff -ur asterisk-1.4.17-orig/include/asterisk/frame.h asterisk-1.4.17/include/a
 +	AST_CONTROL_INBAND_INFO = 42,	/*!< There is inband informatio */
 +	AST_CONTROL_DISCONNECT = 43,	/*!< Disconnect indication */
  };
- 
+
  #define AST_SMOOTHER_FLAG_G729		(1 << 0)
 diff -ur asterisk-1.4.17-orig/main/file.c asterisk-1.4.17/main/file.c
 --- asterisk-1.4.17-orig/main/file.c	2007-11-29 18:29:59.000000000 +0100

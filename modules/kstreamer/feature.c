@@ -162,7 +162,7 @@ int ks_feature_cmd_get(
 	int err;
 	int i;
 	int cnt = 1;
-  
+
 	ks_netlink_send_ack(state, nlh, NLM_F_MULTI);
 
 	/* No need to read_lock(&ks_features_list_lock); because we are also

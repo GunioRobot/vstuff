@@ -306,7 +306,7 @@ void hfc_pcm_port_configure(struct hfc_pcm_port *port, int slots)
 		hfc_pcm_port_configure_slot(&port->chans[i].tx_slot);
 	}*/
 
-	
+
 }
 
 static void hfc_pcm_port_release(

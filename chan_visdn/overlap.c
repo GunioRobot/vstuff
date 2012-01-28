@@ -22,7 +22,7 @@
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 #else
 #include <asterisk.h>
-#endif 
+#endif
 #include <asterisk/lock.h>
 #include <asterisk/channel.h>
 #include <asterisk/config.h>
@@ -234,7 +234,7 @@ static int new_digit(
 }
 
 static int visdn_exec_overlap_dial(struct ast_channel *chan, void *data)
-{	
+{
 	int retval = -1;
 	int do_exit = FALSE;
 
@@ -253,7 +253,7 @@ static int visdn_exec_overlap_dial(struct ast_channel *chan, void *data)
 		ast_frfree(f);
 	}
 
-	return retval; 
+	return retval;
 }
 
 static char *visdn_overlap_dial_descr =
@@ -265,7 +265,7 @@ void visdn_overlap_register(void)
 		"VISDNOverlapDial",
 		visdn_exec_overlap_dial,
 		"Plays dialtone and waits for digits",
-		visdn_overlap_dial_descr);	
+		visdn_overlap_dial_descr);
 }
 
 void visdn_overlap_unregister(void)

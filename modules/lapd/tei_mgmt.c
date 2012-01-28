@@ -56,7 +56,7 @@ int lapd_tm_send_multiai(
 		struct lapd_tei_mgmt_ai *tm_ai =
 			(struct lapd_tei_mgmt_ai *)
 			skb_put(skb, sizeof(*tm_ai));
-		
+
 		tm_ai->value = ais[i];
 		tm_ai->ext = (i < nai - 1) ? 0 : 1;
 	}

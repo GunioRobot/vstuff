@@ -1080,7 +1080,7 @@ static int lapd_socket_handle_sframe_rr(
 					lapd_ack_frames(lapd_sock, hdr->s.n_r);
 					lapd_sock->v_a = hdr->s.n_r;
 				} else {
-					lapd_nr_error_recovery_procedure(	
+					lapd_nr_error_recovery_procedure(
 								lapd_sock);
 					lapd_change_state(lapd_sock,
 						LAPD_DLS_5_AWAITING_ESTABLISH);

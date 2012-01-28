@@ -133,10 +133,10 @@ uart_insert_char(struct uart_port *port, unsigned int status,
                  unsigned int overrun, unsigned int ch, unsigned int flag)
 {
 	struct tty_struct *tty = port->info->tty;
-	
+
 	if ((status & port->ignore_status_mask & ~overrun) == 0)
 		tty_insert_flip_char(tty, ch, flag);
-	
+
 	/*
 	 * Overrun is special.  Since it's reported immediately,
 	 * it doesn't affect the current character.
@@ -152,7 +152,7 @@ static void vgsm_uart_receive_chars(struct vgsm_uart *up, u8 *ext_lsr)
 	struct tty_struct *tty = up->port.info->tty;
 #elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 	struct tty_struct *tty = up->port.info->port.tty;
-#else 
+#else
 	struct tty_struct *tty = up->port.state->port.tty;
 #endif
 	u8 ch, lsr = *ext_lsr;
@@ -287,7 +287,7 @@ static u8 check_modem_status(struct vgsm_uart *up)
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 		wake_up_interruptible(&up->port.info->delta_msr_wait);
-#else	
+#else
 		wake_up_interruptible(&up->port.state->port.delta_msr_wait);
 #endif
 	}
@@ -527,7 +527,7 @@ static void vgsm_uart_set_termios(
 	 * Ask the core to calculate the divisor for us.
 	 */
 	baud = uart_get_baud_rate(port, termios, old,
-			(VGSM_UART_CLOCK / 0xffff) / 16, VGSM_UART_CLOCK/16); 
+			(VGSM_UART_CLOCK / 0xffff) / 16, VGSM_UART_CLOCK/16);
 	quot = uart_get_divisor(port, baud);
 
 	fcr = UART_FCR_ENABLE_FIFO | 0x80;
@@ -682,7 +682,7 @@ struct vgsm_uart *vgsm_uart_create(
 	int line,
 	int (*ioctl_f)(struct vgsm_uart *uart,
 		unsigned int cmd, unsigned long arg))
-	
+
 {
 	BUG_ON(!uart); /* Only static creation supported */
 

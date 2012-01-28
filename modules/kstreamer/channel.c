@@ -63,7 +63,7 @@ struct ks_chan *ks_chan_get_by_nlid(struct nlmsghdr *nlh)
 
 	for (attr = KS_ATTRS(nlh);
 	     KS_ATTR_OK(attr, attrs_len);
-	     attr = KS_ATTR_NEXT(attr, attrs_len)) { 
+	     attr = KS_ATTR_NEXT(attr, attrs_len)) {
 
 		if(attr->type == KS_CHANATTR_ID)
 			return ks_chan_get_by_id(*(__u32 *)KS_ATTR_DATA(attr));
@@ -392,7 +392,7 @@ int ks_chan_cmd_get(
 	int err;
 	struct ks_chan *chan;
 	int cnt = 1;
-  
+
 	ks_netlink_send_ack(state, nlh, NLM_F_MULTI);
 
 	/* No need to read_lock(&ks_chans_list_lock); because we are also

@@ -4,7 +4,7 @@
  * by Kris Boutilier
  *
  * Based upon mech2.h
- * 
+ *
  * Copyright (C) 2002, Digium, Inc.
  *
  * This program is free software and may be used and
@@ -14,10 +14,10 @@
  *
  * Additional background on the techniques used in this code can be found in:
  *
- *  Messerschmitt, David; Hedberg, David; Cole, Christopher; Haoui, Amine; 
- *  Winship, Peter; "Digital Voice Echo Canceller with a TMS32020," 
- *  in Digital Signal Processing Applications with the TMS320 Family, 
- *  pp. 415-437, Texas Instruments, Inc., 1986. 
+ *  Messerschmitt, David; Hedberg, David; Cole, Christopher; Haoui, Amine;
+ *  Winship, Peter; "Digital Voice Echo Canceller with a TMS32020,"
+ *  in Digital Signal Processing Applications with the TMS320 Family,
+ *  pp. 415-437, Texas Instruments, Inc., 1986.
  *
  * A pdf of which is available by searching on the document title at http://www.ti.com/
  *
@@ -41,7 +41,7 @@
 #define FREE(a) free(a)
 #endif
 
-/* Uncomment to provide summary statistics for overall echo can performance every 4000 samples */ 
+/* Uncomment to provide summary statistics for overall echo can performance every 4000 samples */
 //#define MEC2_STATS 4000
 
 /* Uncomment to generate per-sample statistics - this will severely degrade system performance and audio quality */
@@ -68,9 +68,9 @@ typedef struct {
 	/* Pointer to the relative 'start' of the buffer */
 	int idx_d;
 	/* The absolute size of the buffer */
-	int size_d;			 
+	int size_d;
 	/* The actual sample -  twice as large as we need, however we do store values at idx_d and idx_d+size_d */
-	short *buf_d;			
+	short *buf_d;
 } echo_can_cb_s;
 
 /* Echo canceller definition */
@@ -80,7 +80,7 @@ typedef struct  {
 
 	/* absolute time - aka. sample number index - essentially the number of samples since this can was init'ed */
 	int i_d;
-  
+
 	/* Pre-computed constants */
 	/* ---------------------- */
 	/* Number of filter coefficents */
@@ -91,20 +91,20 @@ typedef struct  {
 	/* Accumulators for power computations */
 	/* ----------------------------------- */
 	/* reference signal power estimate - aka. Average absolute value of y(k) */
-	int Ly_i;			
+	int Ly_i;
 	/* ... */
 	int Lu_i;
 
 	/* Accumulators for signal detectors */
 	/* --------------------------------- */
 	/* Power estimate of the recent past of the near-end hybrid signal - aka. Short-time average of: 2 x |s(i)| */
-	int s_tilde_i;		
+	int s_tilde_i;
 	/* Power estimate of the recent past of the far-end receive signal - aka. Short-time average of:     |y(i)| */
 	int y_tilde_i;
 
 	/* Near end speech detection counter - stores Hangover counter time remaining, in samples */
-	int HCNTR_d;			
-  
+	int HCNTR_d;
+
 	/* Circular buffers and coefficients */
 	/* --------------------------------- */
 	/* ... */
@@ -134,10 +134,10 @@ typedef struct  {
 	int cntr_residualcorrected_framesskipped;
 	int cntr_coeff_updates;
 	int cntr_coeff_missedupdates;
- 
-	int avg_Lu_i_toolow; 
+
+	int avg_Lu_i_toolow;
 	int avg_Lu_i_ok;
-#endif 
+#endif
 
 } echo_can_state_t;
 
@@ -152,10 +152,10 @@ static inline void add_cc_s(echo_can_cb_s *cb, short newval)
 {
 	/* Can't use modulus because N+M isn't a power of two (generally) */
 	cb->idx_d--;
-	if (cb->idx_d < (int)0) 
+	if (cb->idx_d < (int)0)
 		/* Whoops - the pointer to the 'start' wrapped around so reset it to the top of the buffer */
 	 	cb->idx_d += cb->size_d;
-  	
+
 	/* Load two copies into memory */
 	cb->buf_d[cb->idx_d] = newval;
 	cb->buf_d[cb->idx_d + cb->size_d] = newval;
@@ -167,7 +167,7 @@ static inline short get_cc_s(echo_can_cb_s *cb, int pos)
 	return cb->buf_d[cb->idx_d + pos];
 }
 
-static inline void init_cc(echo_can_state_t *ec, int N, int maxy, int maxu) 
+static inline void init_cc(echo_can_state_t *ec, int N, int maxy, int maxu)
 {
 
 	void *ptr = ec;
@@ -182,7 +182,7 @@ static inline void init_cc(echo_can_state_t *ec, int N, int maxy, int maxu)
 	/* Reset parameters */
 	ec->N_d = N;
 	ec->beta2_i = DEFAULT_BETA1_I;
-  
+
 	/* Allocate coefficient memory */
 	ec->a_i = ptr;
 	ptr += (sizeof(int) * ec->N_d);
@@ -192,7 +192,7 @@ static inline void init_cc(echo_can_state_t *ec, int N, int maxy, int maxu)
 	/* Reset Y circular buffer (short version) */
 	init_cb_s(&ec->y_s, maxy, ptr);
 	ptr += (sizeof(short) * (maxy) * 2);
-  
+
 	/* Reset Sigma circular buffer (short version for FIR filter) */
 	init_cb_s(&ec->s_s, (1 << DEFAULT_ALPHA_ST_I), ptr);
 	ptr += (sizeof(short) * (1 << DEFAULT_ALPHA_ST_I) * 2);
@@ -205,7 +205,7 @@ static inline void init_cc(echo_can_state_t *ec, int N, int maxy, int maxu)
 
 	/* Reset the absolute time index */
 	ec->i_d = (int)0;
-  
+
 	/* Reset the power computations (for y and u) */
 	ec->Ly_i = DEFAULT_CUTOFF_I;
 	ec->Lu_i = DEFAULT_CUTOFF_I;
@@ -213,7 +213,7 @@ static inline void init_cc(echo_can_state_t *ec, int N, int maxy, int maxu)
 #ifdef MEC2_STATS
 	/* set the identity */
 	ec->id = (int)&ptr;
-  
+
 	/* Reset performance stats */
 	ec->cntr_nearend_speech_frames = (int)0;
 	ec->cntr_residualcorrected_frames = (int)0;
@@ -237,7 +237,7 @@ static inline void echo_can_free(echo_can_state_t *ec)
 	FREE(ec);
 }
 
-static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig) 
+static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig)
 {
 
 	/* Declare local variables that are used more than once */
@@ -251,7 +251,7 @@ static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig
 	int Py_i;
 	/* ... */
 	int two_beta_i;
-	
+
 	/* flow A on pg. 428 */
 	/* eq. (16): high-pass filter the input to generate the next value;
 	 *           push the current value into the circular buffer
@@ -261,7 +261,7 @@ static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig
 	 *     s_i_d = sdc_d;
 	 *       s_d = s_i_d;
 	 *     s_i_d = (float)(1.0 - gamma_d) * s_i_d
-	 *	+ (float)(0.5 * (1.0 - gamma_d)) * (sdc_d - sdc_im1_d); 
+	 *	+ (float)(0.5 * (1.0 - gamma_d)) * (sdc_d - sdc_im1_d);
 	 */
 
 	/* Update the Far-end receive signal circular buffers and accumulators */
@@ -272,11 +272,11 @@ static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig
 	ec->y_tilde_i += abs(iref) >> DEFAULT_ALPHA_ST_I;
 	/* Push a copy of the new sample into its circular buffer */
 	add_cc_s(&ec->y_s, iref);
- 
+
 
 	/* eq. (2): compute r in fixed-point */
-	rs = CONVOLVE2(ec->a_s, 
-  			ec->y_s.buf_d + ec->y_s.idx_d, 
+	rs = CONVOLVE2(ec->a_s,
+  			ec->y_s.buf_d + ec->y_s.idx_d,
   			ec->N_d);
 	rs >>= 15;
 
@@ -285,7 +285,7 @@ static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig
 	 * speech is not present
 	 */
 	u = isig - rs;
-  
+
 	/* Push a copy of the output value sample into its circular buffer */
 	add_cc_s(&ec->u_s, u);
 
@@ -302,10 +302,10 @@ static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig
 
 
 	/* Push a copy of the current short-time average of the far-end receive signal into it's circular buffer */
-	add_cc_s(&ec->y_tilde_s, ec->y_tilde_i);		
+	add_cc_s(&ec->y_tilde_s, ec->y_tilde_i);
 
 	/* flow B on pg. 428 */
-  
+
 	/* If the hangover timer isn't running then compute the new convergence factor, otherwise set Py_i to 32768 */
 	if (!ec->HCNTR_d) {
 		Py_i = (ec->Ly_i >> DEFAULT_SIGMA_LY_I) * (ec->Ly_i >> DEFAULT_SIGMA_LY_I);
@@ -313,7 +313,7 @@ static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig
 	} else {
 	  	Py_i = (1 << 15);
 	}
-  
+
 #if 0
 	/* Vary rate of adaptation depending on position in the file
 	 *  Do not do this for the first (DEFAULT_UPDATE_TIME) secs after speech
@@ -330,12 +330,12 @@ static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig
 		ec->beta2_d = DEFAULT_BETA1;
 	}
 #endif
-  
+
 	/* Fixed point, inverted */
-	ec->beta2_i = DEFAULT_BETA1_I;	
-  
+	ec->beta2_i = DEFAULT_BETA1_I;
+
 	/* Fixed point version, inverted */
-	two_beta_i = (ec->beta2_i * Py_i) >> 15;	
+	two_beta_i = (ec->beta2_i * Py_i) >> 15;
 	if (!two_beta_i)
 		two_beta_i++;
 
@@ -371,7 +371,7 @@ static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig
 
 	/* Determine if near end speech was detected in this sample */
 	/* -------------------------------------------------------- */
-	if (((ec->s_tilde_i >> (DEFAULT_ALPHA_ST_I - 1)) > ec->max_y_tilde) 
+	if (((ec->s_tilde_i >> (DEFAULT_ALPHA_ST_I - 1)) > ec->max_y_tilde)
 	    && (ec->max_y_tilde > 0))  {
 		/* Then start the Hangover counter */
 		ec->HCNTR_d = DEFAULT_HANGT;
@@ -387,7 +387,7 @@ static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig
 		++ec->cntr_nearend_speech_frames;
 #endif
 		ec->HCNTR_d--;
-	} 
+	}
 
 	/* Update coefficients if no near-end speech in this sample (ie. HCNTR_d = 0)
 	 * and we have enough signal to bother trying to update.
@@ -401,7 +401,7 @@ static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig
 				printk( KERN_INFO "updating coefficients with: ec->Lu_i %9d\n", ec->Lu_i);
 #endif
 #ifdef MEC2_STATS
-				ec->avg_Lu_i_ok = ec->avg_Lu_i_ok + ec->Lu_i;  
+				ec->avg_Lu_i_ok = ec->avg_Lu_i_ok + ec->Lu_i;
 				++ec->cntr_coeff_updates;
 #endif
 				for (k=0; k < ec->N_d; k++) {
@@ -414,18 +414,18 @@ static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig
 					ec->a_i[k] += grad2 / two_beta_i;
 					ec->a_s[k] = ec->a_i[k] >> 16;
 				}
-		 	 } else { 
+		 	 } else {
 #ifdef MEC2_STATS_DETAILED
 				printk( KERN_INFO "insufficient signal to update coefficients ec->Lu_i %5d < %5d\n", ec->Lu_i, MIN_UPDATE_THRESH_I);
 #endif
 #ifdef MEC2_STATS
-				ec->avg_Lu_i_toolow = ec->avg_Lu_i_toolow + ec->Lu_i;  
+				ec->avg_Lu_i_toolow = ec->avg_Lu_i_toolow + ec->Lu_i;
 				++ec->cntr_coeff_missedupdates;
 #endif
 			}
 	}
-  
-	/* paragraph below eq. (15): if no near-end speech in the sample and 
+
+	/* paragraph below eq. (15): if no near-end speech in the sample and
 	 * the reference signal power estimate > cutoff threshold
 	 * then perform residual error suppression
 	 */
@@ -448,7 +448,7 @@ static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig
 #endif
 	}
 #else
-	if (ec->HCNTR_d == 0) { 
+	if (ec->HCNTR_d == 0) {
 		if ((ec->Ly_i/(ec->Lu_i + 1)) > DEFAULT_SUPPR_I) {
 			for (k=0; k < RESIDUAL_SUPRESSION_PASSES; k++) {
 	  			u = u * (ec->Lu_i >> DEFAULT_SIGMA_LU_I) / ((ec->Ly_i >> (DEFAULT_SIGMA_LY_I + 2)) + 1);
@@ -466,19 +466,19 @@ static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig
 		}
 #endif
 	}
-#endif	
-#endif  
+#endif
+#endif
 
 #if 0
 	/* This will generate a non-linear supression factor, once converted */
-	if ((ec->HCNTR_d == 0) && 
+	if ((ec->HCNTR_d == 0) &&
 	   ((ec->Lu_d/ec->Ly_d) < DEFAULT_SUPPR) &&
-	    (ec->Lu_d/ec->Ly_d > EC_MIN_DB_VALUE)) { 
+	    (ec->Lu_d/ec->Ly_d > EC_MIN_DB_VALUE)) {
 	    	suppr_factor = (10 / (float)(SUPPR_FLOOR - SUPPR_CEIL)) * log(ec->Lu_d/ec->Ly_d)
 	    			- SUPPR_CEIL / (float)(SUPPR_FLOOR - SUPPR_CEIL);
 		u_suppr = pow(10.0, (suppr_factor) * RES_SUPR_FACTOR / 10.0) * u_suppr;
 	}
-#endif  
+#endif
 
 #ifdef MEC2_STATS
 	/* Periodically dump performance stats */
@@ -494,11 +494,11 @@ static inline short echo_can_update(echo_can_state_t *ec, short iref, short isig
 		else
 			ec->avg_Lu_i_ok = -1;
 
-		printk( KERN_INFO "%d: Near end speech: %5d Residuals corrected/skipped: %5d/%5d Coefficients updated ok/low sig: %3d/%3d Lu_i avg ok/low sig %6d/%5d\n", 
+		printk( KERN_INFO "%d: Near end speech: %5d Residuals corrected/skipped: %5d/%5d Coefficients updated ok/low sig: %3d/%3d Lu_i avg ok/low sig %6d/%5d\n",
 			ec->id,
-			ec->cntr_nearend_speech_frames, 
-			ec->cntr_residualcorrected_frames, ec->cntr_residualcorrected_framesskipped, 
-			ec->cntr_coeff_updates, ec->cntr_coeff_missedupdates, 
+			ec->cntr_nearend_speech_frames,
+			ec->cntr_residualcorrected_frames, ec->cntr_residualcorrected_framesskipped,
+			ec->cntr_coeff_updates, ec->cntr_coeff_missedupdates,
 			ec->avg_Lu_i_ok, ec->avg_Lu_i_toolow);
 
 		ec->cntr_nearend_speech_frames = 0;
@@ -553,8 +553,8 @@ static inline echo_can_state_t *echo_can_create(int len, int adaption_mode)
 
 static inline int echo_can_traintap(echo_can_state_t *ec, int pos, short val)
 {
-	/* Set the hangover counter to the length of the can to 
-	 * avoid adjustments occuring immediately after initial forced training 
+	/* Set the hangover counter to the length of the can to
+	 * avoid adjustments occuring immediately after initial forced training
 	 */
 	ec->HCNTR_d = ec->N_d << 1;
 

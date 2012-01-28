@@ -322,7 +322,7 @@ int q931_ie_low_layer_compatibility_read_from_buf(
 	int len,
 	void (*report_func)(int level, const char *format, ...),
 	struct q931_interface *intf);
-	
+
 int q931_ie_low_layer_compatibility_write_to_buf(
 	const struct q931_ie *ie,
 	void *buf,

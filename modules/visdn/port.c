@@ -472,13 +472,13 @@ struct kset *visdn_ports_kset;
 int visdn_port_modinit(void)
 {
 	int err;
-		
+
 		visdn_ports_kset = kset_create_and_add("ports", NULL, &visdn_kset->kobj);
 		if (!visdn_ports_kset) {
 		   err = -ENOMEM;
 		goto err_kset_register;
 		}
-	
+
 	return 0;
 
 	kset_unregister(visdn_ports_kset);
@@ -489,5 +489,5 @@ err_kset_register:
 
 void visdn_port_modexit(void)
 {
-	kset_unregister(visdn_ports_kset);	
+	kset_unregister(visdn_ports_kset);
 }

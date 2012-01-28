@@ -262,7 +262,7 @@ void ks_conn_topology_updated(
 static void ks_conn_timers_updated(struct ks_timerset *set)
 {
 	struct ks_conn *conn = container_of(set, struct ks_conn, timerset);
-	
+
 	ks_conn_send_message(conn, KS_CONN_MSG_REFRESH, NULL, 0);
 }
 
@@ -876,7 +876,7 @@ retry:
 			}
 
 			memcpy(skb_put(skb, req->skb->len),
-				req->skb->data, req->skb->len); 
+				req->skb->data, req->skb->len);
 		}
 
 		nlh->nlmsg_len = skb->tail - oldtail;
@@ -1180,7 +1180,7 @@ void ks_conn_set_topology_state(
 	struct ks_conn *conn,
 	enum ks_topology_state state)
 {
-	ks_conn_debug_state(conn, 
+	ks_conn_debug_state(conn,
 		"Topology state changed from %s to %s\n",
 		ks_topology_state_to_text(conn->topology_state),
 		ks_topology_state_to_text(state));

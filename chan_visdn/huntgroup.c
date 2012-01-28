@@ -22,7 +22,7 @@
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 #else
 #include <asterisk.h>
-#endif 
+#endif
 #include <asterisk/lock.h>
 #include <asterisk/channel.h>
 #include <asterisk/config.h>
@@ -144,7 +144,7 @@ static void visdn_hg_clear_members(
 	list_for_each_entry_safe(hgm, tpos, &hg->members, node) {
 		visdn_intf_put(hgm->intf);
 		hgm->intf = NULL;
-		
+
 		list_del(&hgm->node);
 		free(hgm);
 	}
@@ -177,7 +177,7 @@ static void visdn_hg_parse_members(
 
 			continue;
 		}
-		
+
 		struct visdn_huntgroup_member *hgm;
 		hgm = malloc(sizeof(*hgm));
 		memset(hgm, 0, sizeof(hgm));
@@ -343,7 +343,7 @@ static char *do_visdn_hg_cli_show(struct ast_cli_entry *e, int cmd, struct ast_c
 		return NULL;
 	case CLI_GENERATE: visdn_hg_cli_show_complete(a->line, a->word, a->pos, a->n);
 	}
-	
+
 #endif
 	struct visdn_huntgroup *hg;
 	ast_rwlock_rdlock(&visdn.huntgroups_list_lock);

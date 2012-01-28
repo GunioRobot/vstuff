@@ -1416,7 +1416,7 @@ static int resolve_conflict(
 			apx->type = RD_RESOLVED;
 		}
 	} else {
-		assert( 
+		assert(
 			apx->type == SH_RESOLVED ||
 			apx->type == RD_RESOLVED ||
 			apx->type == CONFLICT ||
@@ -2124,7 +2124,7 @@ struct pstate {
 
 
 	/* The fallback token */
-	struct symbol *fallback;	
+	struct symbol *fallback;
 
 	/* Left-hand side of current rule */
 	struct symbol *lhs;
@@ -2139,31 +2139,31 @@ struct pstate {
 	struct symbol *rhs[MAXRHS];
 
 	/* Aliases for each RHS symbol (or NULL) */
-	char *alias[MAXRHS];	
+	char *alias[MAXRHS];
 
 	/* Previous rule parsed */
-	struct rule *prevrule;	
+	struct rule *prevrule;
 
 	/* Keyword of a declaration */
-	char *declkeyword;	
+	char *declkeyword;
 
 	/* Where the declaration argument should be put */
 	char **declargslot;
 
 	/* Where the declaration linenumber is put */
-	int *decllnslot;	
+	int *decllnslot;
 
 	/* Assign this association to decl arguments */
 	enum e_assoc declassoc;
 
 	/* Assign this precedence to decl arguments */
-	int preccounter;	
+	int preccounter;
 
 	/* Pointer to first rule in the grammar */
 	struct rule *firstrule;
 
 	/* Pointer to the most recently parsed rule */
-	struct rule *lastrule;	
+	struct rule *lastrule;
 };
 
 /* Parse a single token */
@@ -3016,7 +3016,7 @@ static FILE *file_open(
 	return fp;
 }
 
-/* Duplicate the input file without comments and without actions 
+/* Duplicate the input file without comments and without actions
 ** on rules */
 void Reprint(struct lemon *lemp)
 {

@@ -314,7 +314,7 @@ static int q931_channel_is_restartable(
 {
 	return chan->state != Q931_CHANSTATE_MAINTAINANCE &&
 		chan->state != Q931_CHANSTATE_LEASED;
-/* 
+/*
  * Telecom Italia needs all requested channels to be restarted, even if no
  * calls are active on them
  *
@@ -395,7 +395,7 @@ static void q931_global_handle_restart(
 			struct q931_chanset cs;
 			q931_chanset_init(&cs);
 			q931_chanset_copy(&cs, &gc->restart_reqd_chans);
-			
+
 			for (i=0;i<q931_chanset_count(&cs); i++) {
 
 				if (cs.chans[i]->call) {

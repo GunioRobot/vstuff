@@ -65,7 +65,7 @@ struct visdn_suspended_call
 	int call_identity_len;
 
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
-	time_t  old_when_to_hangup;	
+	time_t  old_when_to_hangup;
 #else
 	struct timeval old_when_to_hangup;
 #endif

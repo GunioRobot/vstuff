@@ -26,10 +26,10 @@ diff -ur asterisk-1.2.1/include/asterisk/frame.h asterisk-1.2.1-vihai/include/as
 @@ -244,6 +244,9 @@
  /*! Indicate video frame update */
  #define AST_CONTROL_VIDUPDATE		18
- 
+
 +#define AST_CONTROL_INBAND_INFO		42
 +#define AST_CONTROL_DISCONNECT		43
 +
  #define AST_SMOOTHER_FLAG_G729		(1 << 0)
- 
+
  /* Option identifiers and flags */

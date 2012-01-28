@@ -23,10 +23,10 @@
 #include <errno.h>
 
 #include <asterisk/version.h>
-#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600) 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 #else
 #include <asterisk.h>
-#endif 
+#endif
 #include <asterisk/lock.h>
 #include <asterisk/file.h>
 #include <asterisk/logger.h>
@@ -61,7 +61,7 @@
 #else
 #define lock lock_dont_use
 #endif
-static char *descrip = 
+static char *descrip =
 "vISDNppp(args): Spawns pppd and connects the channel to a newly created\n"
 "  visdn-ppp channel. pppd must support visdn.so plugin.\n"
 "  Arguments are passed to pppd and should be separated by | characters.\n"
@@ -225,7 +225,7 @@ static int visdn_ppp_exec(struct ast_channel *chan, void *data)
 				} else if (WIFSIGNALED(status)) {
 					ast_verbose(VERBOSE_PREFIX_3
 						"PPP on %s terminated with "
-						"signal %d\n", 
+						"signal %d\n",
 						chan->name,
 						WTERMSIG(status));
 				} else {

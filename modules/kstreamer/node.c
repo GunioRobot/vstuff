@@ -249,7 +249,7 @@ int ks_node_cmd_get(
 	int cnt = 1;
 
 	ks_netlink_send_ack(state, nlh, NLM_F_MULTI);
-  
+
 	/* No need to read_lock(&ks_nodes_list_lock); because we are also
 	 * protected by ks_topology_lock semaphore.
 	 */
@@ -408,7 +408,7 @@ int ks_node_modinit(void)
 
 	return 0;
 
-	kset_unregister(ks_nodes_kset);	
+	kset_unregister(ks_nodes_kset);
 err_kset_register:
 
 	return err;

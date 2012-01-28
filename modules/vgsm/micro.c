@@ -49,22 +49,22 @@ void vgsm_send_msg(
 void vgsm_send_get_fw_ver(struct vgsm_micro *micro)
 {
 	struct vgsm_micro_message msg = { };
-	
+
 	msg.cmd = VGSM_CMD_MAINT;
 	msg.cmd_dep = VGSM_CMD_MAINT_GET_FW_VER;
 	msg.numbytes = 0;
-	
+
 	vgsm_send_msg(micro, &msg);
 }
 
 void vgsm_send_fw_upgrade(struct vgsm_micro *micro)
 {
 	struct vgsm_micro_message msg = { };
-	
+
 	msg.cmd = VGSM_CMD_FW_UPGRADE;
 	msg.cmd_dep = 0;
 	msg.numbytes = 0;
-	
+
 	vgsm_send_msg(micro, &msg);
 }
 

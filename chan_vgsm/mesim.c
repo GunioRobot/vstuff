@@ -29,7 +29,7 @@
 #include <netinet/tcp.h>
 #include <asterisk/version.h>
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
-#else 
+#else
 #include <asterisk.h>
 #endif
 
@@ -240,7 +240,7 @@ int vgsm_mesim_open(struct vgsm_mesim *mesim, const char *devname)
 	newtio.c_iflag = IGNBRK | IGNPAR;
 	newtio.c_oflag = 0;
 	newtio.c_lflag = 0;
-	
+
 	newtio.c_cc[VINTR]	= 0;
 	newtio.c_cc[VQUIT]	= 0;
 	newtio.c_cc[VERASE]	= 0;
@@ -258,7 +258,7 @@ int vgsm_mesim_open(struct vgsm_mesim *mesim, const char *devname)
 	newtio.c_cc[VWERASE]	= 0;
 	newtio.c_cc[VLNEXT]	= 0;
 	newtio.c_cc[VEOL2]	= 0;
-	
+
 	if (tcflush(mesim->fd, TCIOFLUSH) < 0) {
 		ast_log(LOG_ERROR,
 			"%s: tcflush(TCIOFLUSH):  %s\n",

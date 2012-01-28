@@ -434,7 +434,7 @@ void hfc_fifo_dealloc(struct hfc_fifo *fifo)
 }
 
 void hfc_fifo_init(
-	struct hfc_fifo *fifo, 
+	struct hfc_fifo *fifo,
 	struct hfc_card *card,
 	int hw_index,
 	enum hfc_direction direction,

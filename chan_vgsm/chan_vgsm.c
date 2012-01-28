@@ -268,7 +268,7 @@ static struct ast_channel *vgsm_ast_chan_alloc(
 			ast_chan->rawwriteformat = AST_FORMAT_ULAW;
 			vgsm_chan->prev_rawreadformat = AST_FORMAT_ULAW;
 			vgsm_chan->prev_rawwriteformat = AST_FORMAT_ULAW;
-		}	
+		}
 	}
 
 	pbx_builtin_setvar_helper(ast_chan,
@@ -409,7 +409,7 @@ static int vgsm_state_from_var(
 	struct vgsm_state *state,
 	struct ast_variable *var)
 {
-	if (!strcasecmp(var->name, "sms_spooler")) { 
+	if (!strcasecmp(var->name, "sms_spooler")) {
 		strncpy(state->sms_spooler, var->value,
 			sizeof(state->sms_spooler));
 	} else if (!strcasecmp(var->name, "sms_spooler_pars")) {
@@ -478,14 +478,14 @@ static char *vgsm_debug_timer_func(struct ast_cli_entry *e, int cmd, struct ast_
 	switch (cmd) {
 	case CLI_INIT:
 		e->command = "vgsm debug timer";
-		e->usage =   "Usage: vgsm debug timer\n"		
+		e->usage =   "Usage: vgsm debug timer\n"
 			     "\n"
 			     "Enable debugging of vGSM timer events\n";
 		return NULL;
 	case CLI_GENERATE:
 		return NULL;
 	}
-#endif	
+#endif
 	ast_mutex_lock(&vgsm.state_lock);
 	vgsm.debug_timer = TRUE;
 	ast_mutex_unlock(&vgsm.state_lock);
@@ -537,7 +537,7 @@ static char *vgsm_no_debug_timer_func(struct ast_cli_entry *e, int cmd, struct a
 	case CLI_GENERATE:
 		return NULL;
 	}
-#endif	
+#endif
 	ast_mutex_lock(&vgsm.state_lock);
 	vgsm.debug_timer = FALSE;
 	ast_mutex_unlock(&vgsm.state_lock);
@@ -588,15 +588,15 @@ static char *vgsm_reload_func(struct ast_cli_entry *e, int cmd, struct ast_cli_a
 	case CLI_GENERATE:
 		return NULL;
 	}
-#endif	
+#endif
 	if (vgsm_reload_config() < 0) {
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		ast_cli(fd, "Error reloading configuration\n");
 		return RESULT_FAILURE;
-#else	
+#else
 		ast_cli(a->fd, "Error reloading configuration\n");
 		return CLI_FAILURE;
-#endif	
+#endif
 	}
 
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
@@ -997,14 +997,14 @@ struct vgsm_chan *vgsm_alloc_inbound_call(struct vgsm_me *me)
 		DSP_DIGITMODE_DTMF |
 		(vgsm_chan->mc->dtmf_quelch ? 0 : DSP_DIGITMODE_NOQUELCH) |
 		(vgsm_chan->mc->dtmf_mutemax ? DSP_DIGITMODE_MUTEMAX : 0) |
-		(vgsm_chan->mc->dtmf_relax ? DSP_DIGITMODE_RELAXDTMF : 0)); 
+		(vgsm_chan->mc->dtmf_relax ? DSP_DIGITMODE_RELAXDTMF : 0));
 
 	struct ast_channel *ast_chan = vgsm_chan->ast_chan;
 
 	strcpy(ast_chan->exten, "s");
 	strncpy(ast_chan->context, vgsm_chan->mc->context,
 					sizeof(ast_chan->context));
-	ast_chan->priority = 1;	
+	ast_chan->priority = 1;
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	strncpy(ast_chan->language, vgsm_chan->mc->language, sizeof(ast_chan->language));
 #else
@@ -1239,10 +1239,10 @@ static int vgsm_indicate(
 #endif
 {
 	struct vgsm_chan *vgsm_chan = to_vgsm_chan(ast_chan);
-		
+
 	//struct vgsm_me *me = vgsm_chan->me;
 	struct vgsm_me_config *mc = vgsm_chan->mc;
-	
+
 	if (!vgsm_chan) {
 		ast_log(LOG_ERROR, "NO VGSM_CHAN!!\n");
 		return 1;
@@ -1268,8 +1268,8 @@ static int vgsm_indicate(
 
 		return 0;
 	break;
-	
-		
+
+
 	case AST_CONTROL_HOLD:
 		ast_moh_start(ast_chan, data, mc->mohinterpret);
 		break;
@@ -1277,7 +1277,7 @@ static int vgsm_indicate(
 	case AST_CONTROL_UNHOLD:
 		ast_moh_stop(ast_chan);
 		break;
-	
+
 	case AST_CONTROL_ANSWER:
 		ast_playtones_stop(ast_chan);
 
@@ -1348,7 +1348,7 @@ static int vgsm_transfer(
 	return -1;
 }
 
-#if ASTERISK_VERSION_NUM < 10402 
+#if ASTERISK_VERSION_NUM < 10402
 static int vgsm_send_digit(struct ast_channel *ast_chan, char digit)
 {
 	int duration = 300;
@@ -1665,7 +1665,7 @@ static int vgsm_write(
 		ast_log(LOG_WARNING, "Asked to transmit frame type %d,"
 			" while native formats is %s(%d)"
 			" read/write = %s(%d)/%s(%d)\n",
-			frame->subclass, 
+			frame->subclass,
 			ast_getformatname_multiple(s1, sizeof(s1) - 1,
 				ast_chan->nativeformats),
 			ast_chan->nativeformats,
@@ -1713,7 +1713,7 @@ static int vgsm_write(
 
 	if (frame->subclass != ast_chan->rawwriteformat) {
 		ast_log(LOG_WARNING, "Frame subclass %02x does not match"
-				" rawwriteformat %02x\n", 
+				" rawwriteformat %02x\n",
 				frame->subclass, ast_chan->rawwriteformat);
 		return 0;
 	}
@@ -2059,7 +2059,7 @@ err_invalid_format:
 err_invalid_destination:
 err_unsupported_format:
 
-	return NULL; 
+	return NULL;
 }
 
 static const struct ast_channel_tech vgsm_tech = {
@@ -2230,7 +2230,7 @@ static int manager_vgsm_sms_tx(struct mansession *s, struct message *m)
 			astman_append(s, "Status: 505\n");
 			astman_send_error(s, m, "Unsupported content-type");
 			goto err_unsupported_content_type;
-		
+
 		}
 
 		char *par;

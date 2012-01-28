@@ -329,9 +329,9 @@ static struct ksup_chan *ksup_chan_create(
 #else
  	chan->read_fifo = kmalloc(sizeof(struct kfifo),GFP_KERNEL);
 	if (IS_ERR(chan->read_fifo))
-		goto err_fifo_rx_alloc;	
+		goto err_fifo_rx_alloc;
 	alloc_ret =kfifo_alloc(chan->read_fifo,1024,GFP_KERNEL);
-	if (alloc_ret == -ENOMEM) 
+	if (alloc_ret == -ENOMEM)
 	     goto err_fifo_rx_alloc;
 #endif
         skb_queue_head_init(&chan->read_queue);
@@ -831,7 +831,7 @@ static int __init ksup_init_module(void)
 	snprintf(ksup_stream_device.class_id,
 		sizeof(ksup_stream_device.class_id),
 		"userport_stream");
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30) 
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
 	snprintf(ksup_stream_device.bus_id,
 		sizeof(ksup_stream_device.bus_id),
 		"userport_stream");
@@ -878,7 +878,7 @@ static int __init ksup_init_module(void)
 	snprintf(ksup_frame_device.class_id,
 		sizeof(ksup_frame_device.class_id),
 		"userport_frame");
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30) 
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
 	snprintf(ksup_frame_device.bus_id,
 		sizeof(ksup_frame_device.bus_id),
 		"userport_frame");

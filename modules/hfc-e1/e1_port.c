@@ -141,7 +141,7 @@ void hfc_e1_port_update_sync_ctrl(
 		sc |= hfc_R_SYNC_CTRL_V_PCM_SYNC_F0IO;
 		sc |= hfc_R_SYNC_CTRL_V_JATT_OFF;
 	}
-	
+
 	hfc_outb(port->card, hfc_R_SYNC_CTRL, sc);
 }
 
@@ -949,7 +949,7 @@ static void hfc_e1_port_state_change_work(void *data)
 	hfc_card_lock(card);
 
 	old_state = port->l1_state;
-	
+
 	rd_sta = hfc_inb(card, hfc_R_E1_RD_STA);
 	port->l1_state = hfc_R_E1_RD_STA_V_E1_STA(rd_sta);
 

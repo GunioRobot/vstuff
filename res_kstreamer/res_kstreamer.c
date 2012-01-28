@@ -24,9 +24,9 @@
 
 #include <asterisk/version.h>
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
-#else 
+#else
 #include <asterisk.h>
-#endif 
+#endif
 
 #include <asterisk/lock.h>
 #include <asterisk/file.h>
@@ -107,10 +107,10 @@ static void ks_logger(int level, const char *format, ...)
 static  char *ks_kstreamer_show_features_complete(
 #if ASTERISK_VERSION_NUM < 010400 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10400)
 	char *line, char *word
-#else 
+#else
 	const char *line, const char *word
-#endif	
-	,int pos, int state) 	
+#endif
+	,int pos, int state)
 {
 	/*
 	int i;
@@ -145,16 +145,16 @@ static  char *ks_kstreamer_show_features_complete(
  	for (i=0; i<ARRAY_SIZE(ks_conn->features_hash); i++) {
 		struct ks_feature *feature;
 		struct hlist_node *t;
-#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600) 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 		hlist_for_each_entry(feature, t, &ks_conn->features_hash[i],
 								node) {
 			ast_cli(fd, "0x%08x: %s\n",
 				feature->id,
 				feature->name);
-			} 
+			}
 #else
 		hlist_for_each_entry(feature, t, &ks_conn->features_hash[i],
-								node) {   
+								node) {
 			ast_cli(a->fd, "0x%08x: %s\n",
 				feature->id,
 				feature->name);
@@ -162,7 +162,7 @@ static  char *ks_kstreamer_show_features_complete(
 #endif
 	}
 	ks_conn_topology_unlock(ks_conn);
-#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600) 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
 #else
 	return CLI_SUCCESS;
@@ -176,7 +176,7 @@ static char ks_kstreamer_show_features_help[] =
 "	\n";
 
  static  struct ast_cli_entry ks_kstreamer_show_features =
-{	
+{
 	{ "kstreamer", "show", "features", NULL },
 	ks_kstreamer_show_features_func,
 	"",
@@ -239,7 +239,7 @@ static char *ks_kstreamer_show_nodes_func(struct ast_cli_entry *e, int cmd, stru
 		}
 	}
 	ks_conn_topology_unlock(ks_conn);
-#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600) 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
 #else
 	return CLI_SUCCESS;
@@ -269,7 +269,7 @@ static char *ks_kstreamer_show_chans_complete(
 #else
 	const char *line, const char *word
 #endif
-	,int pos, int state)		
+	,int pos, int state)
 {
 	/*
 	int i;
@@ -319,7 +319,7 @@ static char *ks_kstreamer_show_chans_func(struct ast_cli_entry *e, int cmd, stru
 		}
 	}
 	ks_conn_topology_unlock(ks_conn);
-#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600) 
+#if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >=10200  && ASTERISK_VERSION_NUM < 10600)
 	return RESULT_SUCCESS;
 #else
 	return CLI_SUCCESS;
@@ -351,7 +351,7 @@ static char *ks_kstreamer_show_pipelines_complete(
 #else
 	const char *line, const char *word
 #endif
-	,int pos, int state)	
+	,int pos, int state)
 {
 	/*
 	int i;
@@ -491,7 +491,7 @@ static char *ks_kstreamer_no_debug_messages_func(struct ast_cli_entry *e, int cm
 #else
 	return CLI_SUCCESS;
 #endif
-	
+
 }
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 static char ks_kstreamer_no_debug_messages_help[] =
@@ -574,7 +574,7 @@ static char *ks_kstreamer_no_debug_router_func(struct ast_cli_entry *e, int cmd,
 	return RESULT_SUCCESS;
 #else
 	return CLI_SUCCESS;
-#endif	
+#endif
 }
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 static char ks_kstreamer_no_debug_router_help[] =
@@ -713,5 +713,5 @@ AST_MODULE_INFO(ASTERISK_GPL_KEY,
 		"Kstreamer handler",
 		.load = ks_load_module,
 		.unload = ks_unload_module,
-	); 
+	);
 #endif

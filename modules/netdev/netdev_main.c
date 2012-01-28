@@ -776,7 +776,7 @@ static int vnd_netdev_open(struct net_device *netdev)
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
 	struct vnd_netdevice *netdevice = netdev->priv;
-#else 
+#else
 	struct vnd_netdevice *netdevice = netdev_priv(netdev);
 #endif
 	struct ks_pipeline *pipeline_rx;
@@ -833,7 +833,7 @@ static int vnd_netdev_stop(struct net_device *netdev)
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
 	struct vnd_netdevice *netdevice = netdev->priv;
-#else 
+#else
 	struct vnd_netdevice *netdevice = netdev_priv(netdev);
 #endif
 
@@ -863,8 +863,8 @@ static int vnd_netdev_hard_start_xmit(
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
 	struct vnd_netdevice *netdevice = netdev->priv;
-#else 
-	
+#else
+
 	struct vnd_netdevice *netdevice = netdev_priv(netdev);
 #endif
 	struct lapd_prim_hdr *prim_hdr;
@@ -889,35 +889,35 @@ static int vnd_netdev_hard_start_xmit(
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 				return NETDEV_TX_OK;
 #else
-				return 0;			
-#endif		
+				return 0;
+#endif
 		case KSS_TX_FULL:
 			netif_stop_queue(netdevice->netdev);
 			skb_push(skb, sizeof(struct lapd_prim_hdr));
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 			 return NETDEV_TX_BUSY;
 #else
-			 return 1;	
+			 return 1;
 #endif
 		case KSS_TX_BUSY:
 			skb_push(skb, sizeof(struct lapd_prim_hdr));
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 			return NETDEV_TX_BUSY;
 #else
-			return 1;		
+			return 1;
 #endif
 		case KSS_TX_LOCKED:
 			skb_push(skb, sizeof(struct lapd_prim_hdr));
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 			return NETDEV_TX_LOCKED;
 #else
-			return 	-1;	
+			return 	-1;
 #endif
 		default:
 			kfree_skb(skb);
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 			return NETDEV_TX_OK;
-#else			
+#else
 			return 0;
 #endif
 		}
@@ -928,7 +928,7 @@ static int vnd_netdev_hard_start_xmit(
 		kfree_skb(skb);
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 		return NETDEV_TX_OK;
-#else	
+#else
 		return 0;
 #endif
 	break;
@@ -961,8 +961,8 @@ static struct net_device_stats *vnd_netdev_get_stats(
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
 	struct vnd_netdevice *netdevice = netdev->priv;
-#else 
-	
+#else
+
 	struct vnd_netdevice *netdevice = netdev_priv(netdev);
 #endif
 
@@ -974,8 +974,8 @@ static void vnd_netdev_set_multicast_list(
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
 	struct vnd_netdevice *netdevice = netdev->priv;
-#else 
-	
+#else
+
 	struct vnd_netdevice *netdevice = netdev_priv(netdev);
 #endif
 
@@ -1026,7 +1026,7 @@ static int vnd_netdev_do_ioctl(
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
 	struct vnd_netdevice *netdevice = netdev->priv;
-#else 
+#else
 	struct vnd_netdevice *netdevice = netdev_priv(netdev);
 #endif
 
@@ -1054,7 +1054,7 @@ static int vnd_netdev_change_mtu(
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
 	struct vnd_netdevice *netdevice = netdev->priv;
-#else 
+#else
 	struct vnd_netdevice *netdevice = netdev_priv(netdev);
 #endif
 
@@ -1128,7 +1128,7 @@ static struct net_device_ops dev_ops = {
 	netdev->netdev_ops=&dev_ops;
 #endif
 
-	
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
 	netdev->rebuild_header = NULL;
 	netdev->hard_header = NULL;
@@ -1141,7 +1141,7 @@ static struct net_device_ops dev_ops = {
 #endif
 
 # if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,31)
-	netdev->set_mac_address = lapd_mac_addr; 
+	netdev->set_mac_address = lapd_mac_addr;
 #else
 #endif
 
@@ -1486,7 +1486,7 @@ static struct net_device_ops dev_ops = {
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
 	netdevice->netdev->priv = netdevice;
-#else 
+#else
 	netdevice->netdev->ml_priv = netdevice;
 #endif
 
@@ -1811,11 +1811,11 @@ static int __init vnd_init_module(void)
 	snprintf(vnd_control_device.class_id,
 		sizeof(vnd_control_device.class_id),
 		"netdev-control");
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)  
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,30)
 	snprintf(vnd_control_device.bus_id,
 		sizeof(vnd_control_device.bus_id),
 		"netdev-control");
-#else 
+#else
 	dev_set_name(&vnd_control_device,"netdev-control");
 #endif
 

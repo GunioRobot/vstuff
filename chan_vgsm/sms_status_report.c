@@ -373,7 +373,7 @@ struct vgsm_sms_status_report *vgsm_sms_status_report_init_from_pdu(
 
 			// What if tp_udl + header != msg_len ?
 			// What if tp_udl % 2 ?
-			
+
 			sms->text = malloc(sizeof(wchar_t) * (tp_udl / 2 + 1));
 			if (!sms->text)
 				goto err_sms_text_alloc;
@@ -522,7 +522,7 @@ int vgsm_sms_status_report_spool(struct vgsm_sms_status_report *sms)
 	struct ast_tm tm;
 	struct timeval tim = ast_tvnow();
 	ast_localtime(&tim, &tm, NULL);
-#endif	
+#endif
 	char tmpstr[40];
 #if ASTERISK_VERSION_NUM < 010600 || (ASTERISK_VERSION_NUM >= 10200 && ASTERISK_VERSION_NUM < 10600)
 	strftime(tmpstr, sizeof(tmpstr), "%a, %d %b %Y %H:%M:%S %z", &tm);
@@ -617,7 +617,7 @@ int vgsm_sms_status_report_spool(struct vgsm_sms_status_report *sms)
 		}
 
 		iconv_close(cd);
-	
+
 		fprintf(f, "%s\n", outbuffer);
 	} else {
 		fprintf(f, "Message successfully delivered\n");

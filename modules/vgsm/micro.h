@@ -31,7 +31,7 @@ struct vgsm_micro_message
 	u8 cmd:2;	/* Command */
 	u8 cmd_dep:3;	/* cmd dependent */
 	u8 numbytes:3;	/* data length */
-	
+
 #elif defined(__LITTLE_ENDIAN_BITFIELD)
 	u8 numbytes:3;	/* data length */
 	u8 cmd_dep:3;	/* cmd dependent */

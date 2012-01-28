@@ -122,7 +122,7 @@ void q931_ces_free(struct q931_ces *ces)
 
 	q931_dlc_release(ces->dlc);
 	q931_dlc_put(ces->dlc);
-	
+
 	q931_call_put(ces->call);
 
 	free(ces);

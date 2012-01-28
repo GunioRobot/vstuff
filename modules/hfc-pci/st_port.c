@@ -597,7 +597,7 @@ static int hfc_st_port_activate(
 	hfc_card_lock(card);
 	hfc_port_do_activate_request(port);
 	hfc_card_unlock(card);
-	
+
 	return 0;
 }
 

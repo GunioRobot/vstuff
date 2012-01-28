@@ -435,7 +435,7 @@ void hfc_sys_port_update_fsm(
 		WARN_ON(1);
 		return;
 	}
-	
+
 	for (i=0; i<port->num_chans; i++) {
 		// If FIFO open! FIXME TODO
 		if (1) {
